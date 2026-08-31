@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 
 const organisations = [
   {
