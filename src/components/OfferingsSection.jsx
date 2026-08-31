@@ -43,9 +43,10 @@ const OfferingsSection = () => {
           {/* Schemes image */}
           <div className="md:col-span-2 mb-2">
             <img
-              src={ASSETS.schemes}
+              decoding="async"
+              src={ASSETS.schemesThumbnail}
               alt="Schemes & Services"
-              className="w-full h-32 object-cover rounded-xl opacity-90"
+              className="w-full h-36 object-cover rounded-xl shadow-sm"
               onError={e => e.target.style.display = 'none'}
             />
           </div>

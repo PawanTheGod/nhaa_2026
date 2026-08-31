@@ -110,6 +110,7 @@ const MEGA_COLUMN_2 = {
 const MEGA_COLUMN_3 = {
   title: 'SCHEME SPECIFIC THEMATIC PORTALS',
   items: [
+    { code: 'SAMBAL (NHAA)', label: 'National Helpline Against Atrocities', logo: ASSETS.sambal, path: '/nhaa' },
     { code: 'SCW', label: 'Senior Citizens Welfare', logo: ASSETS.scw, path: '/samavesh' },
     { code: 'PM-AJAY', label: 'Pradhan Mantri Anusuchit Jaati Abhyuday Yojna', logo: ASSETS.pmajay, path: '/schemes' },
     { code: 'SMILE - Transgender', label: 'National Portal for Transgender Persons', logo: ASSETS.transgender, path: '/samavesh' },
@@ -133,21 +134,84 @@ const DOCUMENTS = [
 ];
 
 const SCHEMES = [
-  { title: 'Pradhan Mantri Anusuchit Jaati Abhyuday Yojna (PM-AJAY)', cat: 'Scheduled Castes', path: '/schemes' },
-  { title: 'PM Young Achievers Scholarship Award Scheme (PM-YASASVI)', cat: 'OBC', path: '/schemes' },
-  { title: 'Centrally Sponsored Scheme for PCR Act 1955 & SC/ST Prevention of Atrocities Act', cat: 'Civil Rights', path: '/schemes' },
+  {
+    title: 'Pradhan Mantri Anusuchit Jaati Abhyuday Yojna (PM-AJAY)',
+    subtitle: 'Apply Now About the Scheme',
+    snippet: 'The objectives of the Scheme are to: Reduce poverty of the SC communities by generation of additional employment opportunities through skill development and income generation...',
+    path: '/schemes',
+  },
+  {
+    title: 'PM YOUNG ACHIEVERS SCHOLARSHIP AWARD SCHEME (PM-YASASVI)',
+    subtitle: 'Apply Now About the Scheme',
+    snippet: 'This is an umbrella Scheme formulated for OBC, EBC and DNT Students by clubbing together Top Class College and School education scholarships for meritorious students...',
+    path: '/schemes',
+  },
+  {
+    title: 'Centrally Sponsored Scheme for PCR Act 1955 & POA Act 1989',
+    subtitle: 'About the Scheme Article 17 of the Constitution',
+    snippet: "Article 17 of the Constitution of India has abolished 'untouchability', and forbidden its practice in any form. Provides financial relief & legal aid to victims...",
+    path: '/nhaa',
+  },
+  {
+    title: 'Top Class Education in College for OBC, EBC and DNT Students',
+    subtitle: 'Apply Now About the Scheme',
+    snippet: 'Scholarship scheme for meritorious students from marginalized communities studying in premier institutions across India including IITs, IIMs, AIIMS and NLUs...',
+    path: '/schemes',
+  },
+  {
+    title: 'Pre-Matric Scholarships Scheme for Scheduled Castes & Others',
+    subtitle: 'Apply Now About the Scheme',
+    snippet: 'Financial support to SC students studying in classes IX and X to reduce dropout rates and support their seamless transition from elementary to secondary education...',
+    path: '/schemes',
+  },
+  {
+    title: 'Post-Matric Scholarship for SC Students',
+    subtitle: 'Apply Now About the Scheme',
+    snippet: 'Complete financial assistance including tuition fees and maintenance allowance for post-secondary or post-matriculation courses across recognized colleges in India...',
+    path: '/schemes',
+  },
 ];
 
 const VACANCIES = [
-  { title: 'Short Term Internship Programme at DAIC (September 2026)', org: 'DAIC', path: '/vacancies' },
-  { title: 'Vacancy Circular for the post of Financial Advisor', org: 'DAIC', path: '/vacancies' },
-  { title: 'Recruitment Notification for Deputy General Manager (Finance)', org: 'NBCFDC', path: '/vacancies' },
+  {
+    title: 'Short Term Internship Programme at DAIC (September 2026)',
+    subtitle: 'Dr. Ambedkar International Centre',
+    snippet: 'Opportunity for young researchers and postgraduate students to gain hands-on experience in public policy, socio-economic research and governance frameworks.',
+    path: '/vacancies',
+  },
+  {
+    title: 'Vacancy Circular for the Post of Financial Advisor',
+    subtitle: 'Autonomous Body Recruitment',
+    snippet: 'Applications invited on deputation basis from eligible officers of Central/State Governments for key financial advisory role.',
+    path: '/vacancies',
+  },
+  {
+    title: 'Recruitment Notification for Deputy General Manager (Finance)',
+    subtitle: 'NBCFDC Headquarters',
+    snippet: 'Direct recruitment for experienced finance and accounting professionals for managing welfare scheme credit disbursals.',
+    path: '/vacancies',
+  },
 ];
 
 const TENDERS = [
-  { title: 'Notice Inviting Expression of Interest for District De-Addiction Centres', org: 'DAIC', path: '/tenders' },
-  { title: 'Invitation for Bids for Manpower Outsourcing Services via GeM', org: 'DAF', path: '/tenders' },
-  { title: 'Tender for Security Guards & Parking Management at Lok Nayak Bhawan', org: 'NCSK', path: '/tenders' },
+  {
+    title: 'Notice Inviting Expression of Interest for District De-Addiction Centres',
+    subtitle: 'Ministry of Social Justice & Empowerment',
+    snippet: 'Inviting proposals from eligible non-governmental organizations and state agencies for setting up Integrated Rehabilitation and De-Addiction Centres.',
+    path: '/tenders',
+  },
+  {
+    title: 'Invitation for Bids for Manpower Outsourcing Services via GeM Portal',
+    subtitle: 'Dr. Ambedkar Foundation (DAF)',
+    snippet: 'Procurement of multi-tasking staff, stenographers, and data entry operators through Government e-Marketplace.',
+    path: '/tenders',
+  },
+  {
+    title: 'Tender for Security Guards & Facility Management at Lok Nayak Bhawan',
+    subtitle: 'NCSK Administrative Office',
+    snippet: 'Comprehensive security and housekeeping services contract for the financial year 2026-27.',
+    path: '/tenders',
+  },
 ];
 
 const HOME_ORGS = [
@@ -158,6 +222,7 @@ const HOME_ORGS = [
   { code: 'NSKFDC', title: 'National Safai Karamcharis Finance and Development Corporation', logo: ASSETS.nskfdc },
   { code: 'NBCFDC', title: 'National Backward Classes Finance and Development Corporation', logo: ASSETS.nbcfdc },
 ];
+
 
 const FOOTER_LINKS = {
   Department: [
@@ -537,10 +602,11 @@ function LatestUpdatesBar() {
 function HomePage() {
   const [personaIdx, setPersonaIdx] = useState(0);
   const [tab, setTab] = useState('schemes');
+  const [showImportantLinks, setShowImportantLinks] = useState(false);
 
   const personas = [
+    { title: 'Government Official', desc: 'Access administrative tools, reports & dashboards.', img: ASSETS.governmentOfficial },
     { title: 'Beneficiary', desc: 'Discover schemes, scholarships & financial assistance.', img: ASSETS.beneficiary },
-    { title: 'Government Official', desc: 'Access administrative portals, reports & dashboards.', img: ASSETS.governmentOfficial },
   ];
 
   const offeringsData = tab === 'schemes' ? SCHEMES : tab === 'vacancies' ? VACANCIES : TENDERS;
@@ -553,31 +619,265 @@ function HomePage() {
 
       <main id="content" style={{ background: '#F8FAFC' }}>
         
-        {/* Stats Banner Section */}
-        <div style={{ maxWidth: 1380, margin: '36px auto 0', padding: '0 24px' }}>
-          <div style={{ background: '#0073E6', borderRadius: 16, padding: '28px 36px', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', flex: 1, justifyBetween: 'space-around', gap: 32 }}>
+        {/* ─── 1. ABOUT US & MINISTERS SECTION (Screenshot 4) ──────── */}
+        <section style={{ maxWidth: 1380, margin: '48px auto 0', padding: '0 24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 40, alignItems: 'start' }}>
+            
+            {/* Left: About Us Text Content */}
+            <div>
+              <h2 style={{ fontSize: 28, fontWeight: 800, color: '#003366', margin: '0 0 16px', letterSpacing: -0.3 }}>
+                About Us
+              </h2>
               
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', opacity: 0.8, letterSpacing: 0.5 }}>CUMULATIVE DISBURSEMENT</div>
-                <div style={{ fontSize: 32, fontWeight: 900, margin: '2px 0' }}>₹67,977 <span style={{ fontSize: 16, fontWeight: 600 }}>Crore</span></div>
-                <div style={{ fontSize: 12, opacity: 0.9 }}>Scholarships for Scheduled Castes</div>
+              <p style={{ fontSize: 14.5, color: '#475569', lineHeight: 1.7, margin: '0 0 20px' }}>
+                The Department of Social Justice &amp; Empowerment (DoSJE) is mandated to ensure the empowerment and welfare of India's most vulnerable groups, including Scheduled Castes, OBCs, Senior Citizens, Transgender Persons, and victims of substance abuse. We implement various targeted schemes for their social, educational, and economic development, ensuring their inclusion despite challenges like the lack of updated demographic data.
+              </p>
+
+              {/* Orange Callout Quote Highlight */}
+              <div
+                style={{
+                  background: '#FFF7ED',
+                  borderLeft: '4px solid #F96302',
+                  padding: '16px 20px',
+                  borderRadius: '0 12px 12px 0',
+                  margin: '0 0 24px',
+                }}
+              >
+                <p style={{ fontSize: 14, color: '#9A3412', fontStyle: 'italic', margin: 0, lineHeight: 1.6, fontWeight: 500 }}>
+                  "The Ministry of Social Justice &amp; Empowerment works to uplift India's most vulnerable communities through targeted initiatives, inclusive growth, and compassionate governance."
+                </p>
               </div>
 
-              <div style={{ width: 1, height: 48, background: 'rgba(255,255,255,0.2)' }} />
+              {/* 3 CTA Rounded Buttons */}
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <Link
+                  to="/about-us"
+                  style={{
+                    border: '1px solid #0073E6',
+                    color: '#0073E6',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    padding: '8px 20px',
+                    borderRadius: 24,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: '#fff',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  Our Team ❯
+                </Link>
+                <Link
+                  to="/about-us"
+                  style={{
+                    border: '1px solid #0073E6',
+                    color: '#0073E6',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    padding: '8px 20px',
+                    borderRadius: 24,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: '#fff',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  Our Ministry ❯
+                </Link>
+                <Link
+                  to="/about-us"
+                  style={{
+                    border: '1px solid #0073E6',
+                    color: '#0073E6',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    padding: '8px 20px',
+                    borderRadius: 24,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: '#fff',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  Our Reports ❯
+                </Link>
+              </div>
+            </div>
 
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', opacity: 0.8, letterSpacing: 0.5 }}>BENEFICIARY COVERAGE</div>
-                <div style={{ fontSize: 32, fontWeight: 900, margin: '2px 0' }}>19.82 <span style={{ fontSize: 16, fontWeight: 600 }}>Crore</span></div>
-                <div style={{ fontSize: 12, opacity: 0.9 }}>Cumulative across all schemes</div>
+            {/* Right: Ministers Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Top Large Card: Dr. Virendra Kumar */}
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 100%)',
+                  border: '1px solid #FDE68A',
+                  borderRadius: 16,
+                  padding: '20px 24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 20,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                }}
+              >
+                <img
+                  src={ASSETS.drVirendraKumar}
+                  alt="Dr. Virendra Kumar"
+                  style={{
+                    width: 88,
+                    height: 88,
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '3px solid #FFFFFF',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                    flexShrink: 0,
+                  }}
+                  onError={(e) => {
+                    e.target.src = '/ashoka_emblem.jpg';
+                  }}
+                />
+                <div>
+                  <h3 style={{ fontSize: 19, fontWeight: 800, color: '#0F172A', margin: '0 0 4px' }}>
+                    Dr. Virendra Kumar
+                  </h3>
+                  <div style={{ fontSize: 13, color: '#475569', lineHeight: 1.4 }}>
+                    Union Minister of Social Justice and Empowerment
+                  </div>
+                </div>
               </div>
 
-              <div style={{ width: 1, height: 48, background: 'rgba(255,255,255,0.2)' }} />
+              {/* Bottom Row of 2 Cards: Shri Ramdas Athawale & Shri B. L. Verma */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                {/* Card 1: Shri Ramdas Athawale */}
+                <div
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: 16,
+                    padding: '18px 16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                  }}
+                >
+                  <img
+                    src={ASSETS.ramdas}
+                    alt="Shri Ramdas Athawale"
+                    style={{
+                      width: 72,
+                      height: 72,
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '2px solid #E2E8F0',
+                      marginBottom: 10,
+                    }}
+                    onError={(e) => {
+                      e.target.src = '/ashoka_emblem.jpg';
+                    }}
+                  />
+                  <h4 style={{ fontSize: 14.5, fontWeight: 800, color: '#0F172A', margin: '0 0 4px' }}>
+                    Shri Ramdas Athawale
+                  </h4>
+                  <div style={{ fontSize: 11.5, color: '#64748B', lineHeight: 1.3 }}>
+                    Minister of State of Social Justice and Empowerment
+                  </div>
+                </div>
+
+                {/* Card 2: Shri B. L. Verma */}
+                <div
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: 16,
+                    padding: '18px 16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                  }}
+                >
+                  <img
+                    src={ASSETS.blVerma}
+                    alt="Shri B. L. Verma"
+                    style={{
+                      width: 72,
+                      height: 72,
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '2px solid #E2E8F0',
+                      marginBottom: 10,
+                    }}
+                    onError={(e) => {
+                      e.target.src = '/ashoka_emblem.jpg';
+                    }}
+                  />
+                  <h4 style={{ fontSize: 14.5, fontWeight: 800, color: '#0F172A', margin: '0 0 4px' }}>
+                    Shri B. L. Verma
+                  </h4>
+                  <div style={{ fontSize: 11.5, color: '#64748B', lineHeight: 1.3 }}>
+                    Minister of State of Social Justice and Empowerment
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ─── 2. BLUE STATS SECTION BANNER (Screenshot 4) ─────────── */}
+        <section style={{ maxWidth: 1380, margin: '40px auto 0', padding: '0 24px' }}>
+          <div
+            style={{
+              background: '#0052CC',
+              borderRadius: 16,
+              padding: '26px 36px',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 24,
+              flexWrap: 'wrap',
+              boxShadow: '0 4px 16px rgba(0,82,204,0.18)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'space-around', gap: 32, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', opacity: 0.85, letterSpacing: 0.5 }}>
+                  CUMULATIVE DISBURSEMENT
+                </div>
+                <div style={{ fontSize: 30, fontWeight: 900, margin: '2px 0' }}>
+                  ₹67,977 <span style={{ fontSize: 15, fontWeight: 600 }}>Crore</span>
+                </div>
+              </div>
+
+              <div style={{ width: 1, height: 44, background: 'rgba(255,255,255,0.2)' }} />
 
               <div>
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', opacity: 0.8, letterSpacing: 0.5 }}>RELEASE OF FUNDS, FY 2025–26</div>
-                <div style={{ fontSize: 32, fontWeight: 900, margin: '2px 0' }}>₹8,731 <span style={{ fontSize: 16, fontWeight: 600 }}>Crore</span></div>
-                <div style={{ fontSize: 12, opacity: 0.9 }}>Provisional · 14.3% above previous year</div>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', opacity: 0.85, letterSpacing: 0.5 }}>
+                  BENEFICIARY COVERAGE
+                </div>
+                <div style={{ fontSize: 30, fontWeight: 900, margin: '2px 0' }}>
+                  19.82 <span style={{ fontSize: 15, fontWeight: 600 }}>Crore</span>
+                </div>
+              </div>
+
+              <div style={{ width: 1, height: 44, background: 'rgba(255,255,255,0.2)' }} />
+
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', opacity: 0.85, letterSpacing: 0.5 }}>
+                  RELEASE OF FUNDS, FY 2025–26
+                </div>
+                <div style={{ fontSize: 30, fontWeight: 900, margin: '2px 0' }}>
+                  ₹8,731 <span style={{ fontSize: 15, fontWeight: 600 }}>Crore</span>
+                </div>
               </div>
             </div>
 
@@ -587,35 +887,222 @@ function HomePage() {
               rel="noreferrer"
               style={{
                 background: '#fff',
-                color: '#0073E6',
-                fontSize: 14,
+                color: '#0052CC',
+                fontSize: 13.5,
                 fontWeight: 700,
                 padding: '10px 22px',
                 borderRadius: 24,
                 textDecoration: 'none',
-                flexShrink: 0
+                flexShrink: 0,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
               }}
             >
               View Dashboard ❯
             </a>
           </div>
-        </div>
+        </section>
 
-        {/* Recent Documents & User Personas Split Section */}
-        <div style={{ maxWidth: 1380, margin: '40px auto', padding: '0 24px' }}>
+        {/* ─── 3. OUR OFFERINGS SECTION (Screenshot 3) ──────────────── */}
+        <section style={{ maxWidth: 1380, margin: '48px auto 0', padding: '0 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div>
+              <h2 style={{ fontSize: 28, fontWeight: 800, color: '#003366', margin: '0 0 4px', letterSpacing: -0.3 }}>
+                Our Offerings
+              </h2>
+              <p style={{ fontSize: 14, color: '#64748B', margin: 0 }}>
+                Discover our schemes, careers, and partnerships.
+              </p>
+            </div>
+            
+            <Link
+              to="/schemes"
+              style={{
+                border: '1px solid #0073E6',
+                color: '#0073E6',
+                fontSize: 13,
+                fontWeight: 600,
+                padding: '8px 18px',
+                borderRadius: 8,
+                textDecoration: 'none',
+                background: '#fff',
+              }}
+            >
+              View all Schemes
+            </Link>
+          </div>
+
+          {/* Filter Pills */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
+            <button
+              onClick={() => setTab('schemes')}
+              style={{
+                background: tab === 'schemes' ? '#0073E6' : '#E2E8F0',
+                color: tab === 'schemes' ? '#fff' : '#475569',
+                border: 'none',
+                padding: '9px 24px',
+                borderRadius: 8,
+                fontSize: 13.5,
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              Schemes
+            </button>
+            <button
+              onClick={() => setTab('vacancies')}
+              style={{
+                background: tab === 'vacancies' ? '#0073E6' : '#E2E8F0',
+                color: tab === 'vacancies' ? '#fff' : '#475569',
+                border: 'none',
+                padding: '9px 24px',
+                borderRadius: 8,
+                fontSize: 13.5,
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              Vacancies
+            </button>
+            <button
+              onClick={() => setTab('tenders')}
+              style={{
+                background: tab === 'tenders' ? '#0073E6' : '#E2E8F0',
+                color: tab === 'tenders' ? '#fff' : '#475569',
+                border: 'none',
+                padding: '9px 24px',
+                borderRadius: 8,
+                fontSize: 13.5,
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              Tenders
+            </button>
+          </div>
+
+          {/* 6 Schemes Cards Grid in 3x2 Layout */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: 20 }}>
+            {offeringsData.map((item, i) => (
+              <div
+                key={i}
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: 16,
+                  padding: '20px',
+                  display: 'flex',
+                  gap: 16,
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,51,102,0.06)';
+                  e.currentTarget.style.borderColor = '#CBD5E1';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.02)';
+                  e.currentTarget.style.borderColor = '#E2E8F0';
+                }}
+              >
+                {/* Left Thumbnail: Official Schemes Thumbnail */}
+                <div
+                  style={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: 12,
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+                    background: '#F1F5F9',
+                  }}
+                >
+                  <img
+                    decoding="async"
+                    src={ASSETS.schemesThumbnail}
+                    alt={item.title}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block',
+                    }}
+                    onError={(e) => {
+                      e.target.src = '/ashoka_emblem.jpg';
+                    }}
+                  />
+                </div>
+
+                {/* Right Details */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <h4 style={{ fontSize: 14.5, fontWeight: 800, color: '#0F172A', margin: '0 0 4px', lineHeight: 1.35 }}>
+                    {item.title}
+                  </h4>
+                  {item.subtitle && (
+                    <div style={{ fontSize: 11.5, color: '#0073E6', fontWeight: 600, marginBottom: 6 }}>
+                      {item.subtitle}
+                    </div>
+                  )}
+                  <p style={{ fontSize: 12, color: '#64748B', lineHeight: 1.45, margin: '0 0 12px', flex: 1, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {item.snippet}
+                  </p>
+                  <Link
+                    to={item.path || '/schemes'}
+                    style={{
+                      color: '#0073E6',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    Know More →
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ─── 4. RECENT DOCUMENTS & USER PERSONAS (Screenshot 2) ───── */}
+        <section style={{ maxWidth: 1380, margin: '48px auto 0', padding: '0 24px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '3fr 1.6fr', gap: 32, alignItems: 'stretch' }}>
             
-            {/* Left: Recent Documents Grid */}
+            {/* Left: Recent Documents Grid (4 items) */}
             <div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: '#003366', marginBottom: 20 }}>Recent Documents</h2>
+              <h2 style={{ fontSize: 28, fontWeight: 800, color: '#003366', margin: '0 0 20px', letterSpacing: -0.3 }}>
+                Recent Documents
+              </h2>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 {DOCUMENTS.map((doc, i) => (
-                  <div key={i} style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', justifyBetween: 'space-between' }}>
+                  <div
+                    key={i}
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: 16,
+                      padding: '22px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                    }}
+                  >
                     <div>
-                      <h4 style={{ fontSize: 15, fontWeight: 700, color: '#1E293B', margin: '0 0 4px' }}>{doc.title}</h4>
-                      <div style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>{doc.date}</div>
-                      <div style={{ fontSize: 11, color: '#475569', marginBottom: 16 }}>
+                      <h4 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: '0 0 4px' }}>
+                        {doc.title}
+                      </h4>
+                      <div style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>
+                        {doc.date}
+                      </div>
+                      <div style={{ fontSize: 11.5, color: '#475569', marginBottom: 16 }}>
                         Type: {doc.type} • File: PDF ({doc.size})
                       </div>
                     </div>
@@ -632,7 +1119,8 @@ function HomePage() {
                         fontWeight: 600,
                         padding: '6px 16px',
                         borderRadius: 8,
-                        textDecoration: 'none'
+                        textDecoration: 'none',
+                        background: '#fff',
                       }}
                     >
                       View Online
@@ -643,40 +1131,123 @@ function HomePage() {
             </div>
 
             {/* Right: Explore User Personas Container */}
-            <div style={{ background: '#0073E6', borderRadius: 20, padding: 28, color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-              <h3 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 6px' }}>Explore User Personas</h3>
-              <p style={{ fontSize: 13, opacity: 0.9, margin: '0 0 20px' }}>Choose your role to discover services made for you.</p>
+            <div
+              style={{
+                background: '#0066FF',
+                borderRadius: 20,
+                padding: '28px 24px',
+                color: '#fff',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+                boxShadow: '0 8px 24px rgba(0,102,255,0.2)',
+              }}
+            >
+              <h3 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 6px' }}>
+                Explore User Personas
+              </h3>
+              <p style={{ fontSize: 13, opacity: 0.9, margin: '0 0 20px' }}>
+                Choose your role to discover services made for you.
+              </p>
 
-              <div style={{ background: '#005BB5', borderRadius: 16, padding: 20, width: '100%', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+              <div
+                style={{
+                  background: '#0047BA',
+                  borderRadius: 16,
+                  padding: '24px 20px',
+                  width: '100%',
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                }}
+              >
                 <img
                   src={personas[personaIdx].img}
-                  alt=""
-                  style={{ height: 180, width: 'auto', objectFit: 'contain', marginBottom: 12 }}
-                  onError={e => e.target.style.display = 'none'}
+                  alt={personas[personaIdx].title}
+                  style={{ height: 180, width: 'auto', objectFit: 'contain', marginBottom: 16 }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
                 />
-                <h4 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{personas[personaIdx].title}</h4>
+                <h4 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>
+                  {personas[personaIdx].title}
+                </h4>
 
-                <button onClick={() => setPersonaIdx(p => (p === 0 ? 1 : 0))} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer' }}>‹</button>
-                <button onClick={() => setPersonaIdx(p => (p === 0 ? 1 : 0))} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer' }}>›</button>
+                <button
+                  onClick={() => setPersonaIdx((p) => (p === 0 ? 1 : 0))}
+                  title="Previous Persona"
+                  style={{
+                    position: 'absolute',
+                    left: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#fff',
+                    fontSize: 26,
+                    cursor: 'pointer',
+                    padding: 6,
+                  }}
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={() => setPersonaIdx((p) => (p === 0 ? 1 : 0))}
+                  title="Next Persona"
+                  style={{
+                    position: 'absolute',
+                    right: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#fff',
+                    fontSize: 26,
+                    cursor: 'pointer',
+                    padding: 6,
+                  }}
+                >
+                  ›
+                </button>
               </div>
             </div>
 
           </div>
-        </div>
+        </section>
 
-        {/* Associated Organisations Section matching live site .home-org-items-sec */}
-        <div style={{ maxWidth: 1380, margin: '48px auto', padding: '0 24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        {/* ─── 5. ASSOCIATED ORGANISATIONS SECTION ──────────────────── */}
+        <section style={{ maxWidth: 1380, margin: '48px auto 0', padding: '0 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
             <div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: '#003366', margin: '0 0 4px' }}>Associated Organisations</h2>
-              <p style={{ fontSize: 14, color: '#64748B', margin: 0 }}>Autonomous commissions, foundations and corporations under the Ministry.</p>
+              <h2 style={{ fontSize: 28, fontWeight: 800, color: '#003366', margin: '0 0 4px', letterSpacing: -0.3 }}>
+                Associated Organisations
+              </h2>
+              <p style={{ fontSize: 14, color: '#64748B', margin: 0 }}>
+                Autonomous commissions, foundations and corporations under the Ministry.
+              </p>
             </div>
-            <Link to="/samavesh" style={{ border: '1px solid #0073E6', color: '#0073E6', fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 8, textDecoration: 'none' }}>
+            <Link
+              to="/samavesh"
+              style={{
+                border: '1px solid #0073E6',
+                color: '#0073E6',
+                fontSize: 13,
+                fontWeight: 600,
+                padding: '8px 18px',
+                borderRadius: 8,
+                textDecoration: 'none',
+                background: '#fff',
+              }}
+            >
               View All Organisations
             </Link>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: 18 }}>
             {HOME_ORGS.map((org) => (
               <Link
                 key={org.code}
@@ -691,54 +1262,362 @@ function HomePage() {
                   borderRadius: 20,
                   textDecoration: 'none',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
                 }}
               >
-                <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', flexShrink: 0 }}>
-                  <img src={org.logo} alt="" style={{ width: 32, height: 32, objectFit: 'contain' }} onError={e => e.target.style.display = 'none'} />
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '50%',
+                    background: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <img
+                    src={org.logo}
+                    alt=""
+                    style={{ width: 32, height: 32, objectFit: 'contain' }}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
                 </div>
                 <div>
-                  <strong style={{ fontSize: 16, color: '#0a4d8f', display: 'block', marginBottom: 2 }}>{org.code}</strong>
-                  <span style={{ fontSize: 13, color: '#1E293B', lineHeight: 1.3 }}>{org.title}</span>
+                  <strong style={{ fontSize: 16, color: '#0a4d8f', display: 'block', marginBottom: 2 }}>
+                    {org.code}
+                  </strong>
+                  <span style={{ fontSize: 13, color: '#1E293B', lineHeight: 1.3 }}>
+                    {org.title}
+                  </span>
                 </div>
               </Link>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Our Offerings Section */}
-        <div style={{ maxWidth: 1380, margin: '48px auto', padding: '0 24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: '#003366', margin: '0 0 4px' }}>Our Offerings</h2>
-              <p style={{ fontSize: 14, color: '#64748B', margin: 0 }}>Discover our schemes, careers, and partnerships.</p>
+        {/* ─── 6. ACTIVITY CORNER / SOCIAL FEEDS (Screenshot 1) ────── */}
+        <section style={{ maxWidth: 1380, margin: '48px auto 0', padding: '0 24px' }}>
+          <div style={{ marginBottom: 20 }}>
+            <h2 style={{ fontSize: 28, fontWeight: 800, color: '#003366', margin: '0 0 4px', letterSpacing: -0.3 }}>
+              Activity Corner
+            </h2>
+            <p style={{ fontSize: 14, color: '#64748B', margin: 0 }}>
+              Live updates and social outreach from the Ministry.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 24 }}>
+            {/* Facebook Embed Card */}
+            <div
+              style={{
+                background: '#FFFFFF',
+                borderRadius: 16,
+                border: '1px solid #E2E8F0',
+                padding: '20px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, paddingBottom: 12, borderBottom: '1px solid #F1F5F9' }}>
+                <FB />
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#1877F2' }}>Facebook Feed</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <img
+                  src={ASSETS.nationalEmblem}
+                  alt=""
+                  style={{ width: 34, height: 34, borderRadius: '50%', background: '#F8FAFC', padding: 3, border: '1px solid #E2E8F0' }}
+                  onError={(e) => { e.target.src = '/ashoka_emblem.jpg'; }}
+                />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>
+                    Ministry of Social Justice and Empowerment, Government of India
+                  </div>
+                  <div style={{ fontSize: 11, color: '#64748B' }}>Official Page</div>
+                </div>
+              </div>
+              <p style={{ fontSize: 12.5, color: '#475569', lineHeight: 1.5, marginBottom: 16 }}>
+                Under the visionary guidance of Hon'ble Minister Dr. Virendra Kumar, Department of Social Justice &amp; Empowerment continues to empower marginalized communities across the nation through inclusive education, skill training, and rapid relief mechanisms.
+              </p>
+              <div style={{ display: 'flex', gap: 20, fontSize: 12, color: '#64748B', paddingTop: 10, borderTop: '1px solid #F1F5F9' }}>
+                <span>👍 8 Likes</span>
+                <span>💬 2 Comments</span>
+                <span>↗ 1 Share</span>
+              </div>
             </div>
-            
-            <Link to="/schemes" style={{ border: '1px solid #0073E6', color: '#0073E6', fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 8, textDecoration: 'none' }}>
-              View all Schemes
+
+            {/* Twitter / X Embed Card */}
+            <div
+              style={{
+                background: '#FFFFFF',
+                borderRadius: 16,
+                border: '1px solid #E2E8F0',
+                padding: '20px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, paddingBottom: 12, borderBottom: '1px solid #F1F5F9' }}>
+                <TW />
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Latest Post on X</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#003366', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12 }}>
+                  MSJE
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>@MSJEGOI</div>
+                  <div style={{ fontSize: 11, color: '#64748B' }}>11:17 AM · Sep 15, 2025</div>
+                </div>
+              </div>
+              <p style={{ fontSize: 12.5, color: '#475569', lineHeight: 1.5, marginBottom: 16 }}>
+                Empowering marginalized youth through specialized skill initiatives under PM-DAKSH &amp; PM-AJAY. Join the mission for an inclusive, self-reliant Bharat! <strong>#NavajeevanOrganizationRO #ViksitBharat2047</strong>
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTop: '1px solid #F1F5F9', fontSize: 12, color: '#64748B' }}>
+                <div style={{ display: 'flex', gap: 16 }}>
+                  <span>❤️ Like</span>
+                  <span>💬 Reply</span>
+                  <span>🔗 Copy link</span>
+                </div>
+                <span style={{ color: '#0073E6', fontWeight: 600, cursor: 'pointer' }}>Read 1 reply</span>
+              </div>
+            </div>
+
+            {/* YouTube / Media Card */}
+            <div
+              style={{
+                background: '#FFFFFF',
+                borderRadius: 16,
+                border: '1px solid #E2E8F0',
+                padding: '20px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, paddingBottom: 12, borderBottom: '1px solid #F1F5F9' }}>
+                <YT />
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#DC2626' }}>Official Media</span>
+              </div>
+              <div
+                style={{
+                  height: 120,
+                  borderRadius: 10,
+                  background: 'linear-gradient(135deg, #003366 0%, #0052CC 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  marginBottom: 12,
+                  position: 'relative',
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                  ▶
+                </div>
+              </div>
+              <h5 style={{ fontSize: 13.5, fontWeight: 700, color: '#0F172A', margin: '0 0 4px' }}>
+                Transformative Schemes of DoSJE: Stories of Change &amp; Inclusion
+              </h5>
+              <div style={{ fontSize: 11.5, color: '#64748B' }}>
+                Ministry of Social Justice &amp; Empowerment Channel
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── 7. NATIONAL PORTAL PARTNERS LOGOS BAR (Screenshot 1) ─── */}
+        <section style={{ background: '#FFFFFF', padding: '36px 0', borderTop: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0', margin: '48px 0 0' }}>
+          <div style={{ maxWidth: 1380, margin: '0 auto', padding: '0 24px' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 32,
+              }}
+            >
+              {/* india.gov.in BETA */}
+              <a href="https://www.india.gov.in/" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+                <img src={ASSETS.nationalEmblem} alt="" style={{ height: 42 }} onError={e => { e.target.src = '/ashoka_emblem.jpg'; }} />
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 900, color: '#003366', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    india.gov.in <span style={{ background: '#FF9900', color: '#000', fontSize: 9, padding: '1px 5px', borderRadius: 3, fontWeight: 800 }}>BETA</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>National Portal of India</div>
+                </div>
+              </a>
+
+              {/* MAKE IN INDIA */}
+              <a href="https://www.makeinindia.com/" target="_blank" rel="noreferrer">
+                <img
+                  src={ASSETS.makeInIndia}
+                  alt="Make In India"
+                  style={{ height: 44, width: 'auto', objectFit: 'contain' }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </a>
+
+              {/* myGOV */}
+              <a href="https://www.mygov.in/" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+                <img src={ASSETS.nationalEmblem} alt="" style={{ height: 38 }} onError={e => { e.target.src = '/ashoka_emblem.jpg'; }} />
+                <img
+                  src={ASSETS.myGov}
+                  alt="myGov मेरी सरकार"
+                  style={{ height: 38, width: 'auto', objectFit: 'contain' }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </a>
+
+              {/* data.gov.in */}
+              <a href="https://data.gov.in/" target="_blank" rel="noreferrer">
+                <img
+                  src={ASSETS.dataGov}
+                  alt="data.gov.in Open Government Data Platform"
+                  style={{ height: 44, width: 'auto', objectFit: 'contain' }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── 8. "NEED SUPPORT?" LIGHT BLUE BANNER (Screenshot 1) ──── */}
+        <section style={{ maxWidth: 1380, margin: '40px auto 48px', padding: '0 24px' }}>
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
+              border: '1px solid #BFDBFE',
+              borderRadius: 16,
+              padding: '28px 36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 16,
+              boxShadow: '0 2px 10px rgba(0,115,230,0.06)',
+            }}
+          >
+            <div>
+              <h3 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', margin: '0 0 4px' }}>
+                Need Support?
+              </h3>
+              <p style={{ fontSize: 14, color: '#475569', margin: 0 }}>
+                Reach out to us and we will get back to you!
+              </p>
+            </div>
+            <Link
+              to="/contact-us"
+              style={{
+                background: '#FFFFFF',
+                color: '#0073E6',
+                fontWeight: 700,
+                padding: '10px 24px',
+                borderRadius: 8,
+                textDecoration: 'none',
+                fontSize: 14,
+                border: '1px solid #0073E6',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+              }}
+            >
+              Get in Touch
             </Link>
           </div>
-
-          <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
-            <button onClick={() => setTab('schemes')} style={{ background: tab === 'schemes' ? '#0073E6' : '#E2E8F0', color: tab === 'schemes' ? '#fff' : '#475569', border: 'none', padding: '10px 24px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Schemes</button>
-            <button onClick={() => setTab('vacancies')} style={{ background: tab === 'vacancies' ? '#0073E6' : '#E2E8F0', color: tab === 'vacancies' ? '#fff' : '#475569', border: 'none', padding: '10px 24px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Vacancies</button>
-            <button onClick={() => setTab('tenders')} style={{ background: tab === 'tenders' ? '#0073E6' : '#E2E8F0', color: tab === 'tenders' ? '#fff' : '#475569', border: 'none', padding: '10px 24px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Tenders</button>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
-            {offeringsData.map((s, i) => (
-              <div key={i} style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, padding: 20 }}>
-                <h4 style={{ fontSize: 15, fontWeight: 700, color: '#1E293B', marginBottom: 12 }}>{s.title}</h4>
-                <Link to={s.path || '/schemes'} style={{ color: '#0073E6', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>Read More ➔</Link>
-              </div>
-            ))}
-          </div>
-        </div>
+        </section>
 
       </main>
+
+      {/* ─── 9. FLOATING SIDEBAR TAB ("Important Links") ──────────── */}
+      <button
+        onClick={() => setShowImportantLinks(true)}
+        style={{
+          position: 'fixed',
+          right: 0,
+          top: '50%',
+          transform: 'translateY(-50%) rotate(-90deg)',
+          transformOrigin: 'bottom right',
+          background: '#0073E6',
+          color: '#fff',
+          fontSize: 12,
+          fontWeight: 700,
+          padding: '8px 16px',
+          borderRadius: '8px 8px 0 0',
+          border: 'none',
+          cursor: 'pointer',
+          zIndex: 9999,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+        }}
+      >
+        Important Links
+      </button>
+
+      {/* Important Links Slideout Drawer */}
+      {showImportantLinks && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 100000,
+            display: 'flex',
+            justifyContent: 'flex-end',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowImportantLinks(false);
+          }}
+        >
+          <div
+            style={{
+              width: 360,
+              background: '#fff',
+              height: '100%',
+              padding: '24px',
+              boxShadow: '-4px 0 20px rgba(0,0,0,0.15)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 16,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: 14 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: '#003366', margin: 0 }}>Important Links</h3>
+              <button onClick={() => setShowImportantLinks(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer' }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <Link to="/nhaa" onClick={() => setShowImportantLinks(false)} style={{ padding: '12px 14px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, textDecoration: 'none', color: '#003366', fontWeight: 700, fontSize: 13 }}>
+                📞 NHAA / SAMBAL Helpline (14566)
+              </Link>
+              <Link to="/samavesh" onClick={() => setShowImportantLinks(false)} style={{ padding: '12px 14px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, textDecoration: 'none', color: '#003366', fontWeight: 700, fontSize: 13 }}>
+                🌐 SAMAVESH Single Window Portal
+              </Link>
+              <Link to="/schemes" onClick={() => setShowImportantLinks(false)} style={{ padding: '12px 14px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, textDecoration: 'none', color: '#003366', fontWeight: 700, fontSize: 13 }}>
+                📑 All Schemes &amp; Scholarships
+              </Link>
+              <Link to="/tenders" onClick={() => setShowImportantLinks(false)} style={{ padding: '12px 14px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, textDecoration: 'none', color: '#003366', fontWeight: 700, fontSize: 13 }}>
+                📢 Tenders &amp; Notices
+              </Link>
+              <Link to="/contact-us" onClick={() => setShowImportantLinks(false)} style={{ padding: '12px 14px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, textDecoration: 'none', color: '#003366', fontWeight: 700, fontSize: 13 }}>
+                🏢 Ministry Directory &amp; Contact
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
+
 
 // ─── FOOTER COMPONENT ──────────────────────────────────────
 function Footer() {
@@ -849,12 +1728,19 @@ function Footer() {
 }
 
 // ─── ROUTER APP MAIN ───────────────────────────────────────
-export default function App() {
+function AppContent() {
+  const location = useLocation();
+  const isDedicatedPortal = location.pathname === '/nhaa' || location.pathname === '/sambal';
+
   return (
-    <Router>
-      <TopBar />
-      <Header />
-      <Navbar />
+    <>
+      {!isDedicatedPortal && (
+        <>
+          <TopBar />
+          <Header />
+          <Navbar />
+        </>
+      )}
 
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -865,9 +1751,18 @@ export default function App() {
         <Route path="/tenders" element={<TendersPage />} />
         <Route path="/contact-us" element={<ContactPage />} />
         <Route path="/nhaa" element={<NhaaPage />} />
+        <Route path="/sambal" element={<NhaaPage />} />
       </Routes>
 
-      <Footer />
+      {!isDedicatedPortal && <Footer />}
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }
