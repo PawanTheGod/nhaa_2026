@@ -290,7 +290,7 @@ function Header() {
               height="52"
               style={{ width: 32, height: 52, objectFit: 'contain' }}
               onError={(e) => {
-                e.target.src = '/ashoka_emblem.jpg';
+                e.target.src = `${import.meta.env.BASE_URL}ashoka_emblem.jpg`;
               }}
             />
           </Link>
@@ -778,7 +778,7 @@ function HomePage() {
                     flexShrink: 0,
                   }}
                   onError={(e) => {
-                    e.target.src = '/ashoka_emblem.jpg';
+                    e.target.src = `${import.meta.env.BASE_URL}ashoka_emblem.jpg`;
                   }}
                 />
                 <div>
@@ -819,7 +819,7 @@ function HomePage() {
                       marginBottom: 10,
                     }}
                     onError={(e) => {
-                      e.target.src = '/ashoka_emblem.jpg';
+                      e.target.src = `${import.meta.env.BASE_URL}ashoka_emblem.jpg`;
                     }}
                   />
                   <h4 style={{ fontSize: 14.5, fontWeight: 800, color: '#0F172A', margin: '0 0 4px' }}>
@@ -856,7 +856,7 @@ function HomePage() {
                       marginBottom: 10,
                     }}
                     onError={(e) => {
-                      e.target.src = '/ashoka_emblem.jpg';
+                      e.target.src = `${import.meta.env.BASE_URL}ashoka_emblem.jpg`;
                     }}
                   />
                   <h4 style={{ fontSize: 14.5, fontWeight: 800, color: '#0F172A', margin: '0 0 4px' }}>
@@ -1072,7 +1072,7 @@ function HomePage() {
                       display: 'block',
                     }}
                     onError={(e) => {
-                      e.target.src = '/ashoka_emblem.jpg';
+                      e.target.src = `${import.meta.env.BASE_URL}ashoka_emblem.jpg`;
                     }}
                   />
                 </div>
@@ -1386,7 +1386,7 @@ function HomePage() {
                   src={ASSETS.nationalEmblem}
                   alt=""
                   style={{ width: 34, height: 34, borderRadius: '50%', background: '#F8FAFC', padding: 3, border: '1px solid #E2E8F0' }}
-                  onError={(e) => { e.target.src = '/ashoka_emblem.jpg'; }}
+                  onError={(e) => { e.target.src = `${import.meta.env.BASE_URL}ashoka_emblem.jpg`; }}
                 />
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>
@@ -1497,7 +1497,7 @@ function HomePage() {
             >
               {/* india.gov.in BETA */}
               <a href="https://www.india.gov.in/" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-                <img src={ASSETS.nationalEmblem} alt="" style={{ height: 42 }} onError={e => { e.target.src = '/ashoka_emblem.jpg'; }} />
+                <img src={ASSETS.nationalEmblem} alt="" style={{ height: 42 }} onError={e => { e.target.src = `${import.meta.env.BASE_URL}ashoka_emblem.jpg`; }} />
                 <div>
                   <div style={{ fontSize: 20, fontWeight: 900, color: '#003366', display: 'flex', alignItems: 'center', gap: 6 }}>
                     india.gov.in <span style={{ background: '#FF9900', color: '#000', fontSize: 9, padding: '1px 5px', borderRadius: 3, fontWeight: 800 }}>BETA</span>
@@ -1520,7 +1520,7 @@ function HomePage() {
 
               {/* myGOV */}
               <a href="https://www.mygov.in/" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-                <img src={ASSETS.nationalEmblem} alt="" style={{ height: 38 }} onError={e => { e.target.src = '/ashoka_emblem.jpg'; }} />
+                <img src={ASSETS.nationalEmblem} alt="" style={{ height: 38 }} onError={e => { e.target.src = `${import.meta.env.BASE_URL}ashoka_emblem.jpg`; }} />
                 <img
                   src={ASSETS.myGov}
                   alt="myGov मेरी सरकार"

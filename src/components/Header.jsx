@@ -16,7 +16,7 @@ const Header = () => {
               width="32"
               height="52"
               style={{ width: 32, height: 52, objectFit: 'contain' }}
-              onError={e => { e.target.src = '/ashoka_emblem.jpg'; }}
+              onError={e => { e.target.src = `${import.meta.env.BASE_URL}ashoka_emblem.jpg`; }}
             />
           </a>
 

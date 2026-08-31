@@ -319,7 +319,7 @@ export default function NhaaPage() {
                 alt="National Emblem of India"
                 style={{ height: 56, width: 'auto' }}
                 onError={(e) => {
-                  e.target.src = '/ashoka_emblem.jpg';
+                  e.target.src = `${import.meta.env.BASE_URL}ashoka_emblem.jpg`;
                 }}
               />
               <div style={{ display: 'flex', flexDirection: 'column' }}>
