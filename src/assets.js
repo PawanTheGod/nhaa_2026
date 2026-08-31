@@ -20,8 +20,8 @@ export const ASSETS = {
   drVirendraKumar: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2026/07/Dr.-Virendra-Kumar.png',
   ramdas: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2026/04/Shri-Ramdas-Athawale.png',
   blVerma: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2026/04/sri-l-b-verma.png',
-  governmentOfficial: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2025/11/Government-Official.png',
-  beneficiary: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2025/11/Beneficiary.png',
+  governmentOfficial: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2026/04/Government-Official.png',
+  beneficiary: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2026/04/Beneficiary.png',
   schemesThumbnail: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2025/11/schemes-768x768.jpg',
 
   // Real CloudFront Organisation Logos from site_source.html
