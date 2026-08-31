@@ -281,9 +281,20 @@ function Header() {
     <header style={{ background: '#fff', padding: '16px 0', borderBottom: '1px solid #E5E7EB' }}>
       <div style={{ maxWidth: 1380, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <Link to="/" style={{ flexShrink: 0 }}>
-            <img src={ASSETS.nationalEmblem} alt="Emblem" style={{ height: 68, width: 'auto' }} onError={e => { e.target.src = '/ashoka_emblem.jpg'; }} />
+          <Link to="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+            <img
+              className="alignnone size-full wp-image-288"
+              src={ASSETS.nationalEmblem}
+              alt="National Emblem of India"
+              width="32"
+              height="52"
+              style={{ width: 32, height: 52, objectFit: 'contain' }}
+              onError={(e) => {
+                e.target.src = '/ashoka_emblem.jpg';
+              }}
+            />
           </Link>
+
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
               <span style={{ background: '#FF9900', color: '#000', fontSize: 10, fontWeight: 800, padding: '1px 6px', borderRadius: 3, letterSpacing: 0.5 }}>BETA</span>

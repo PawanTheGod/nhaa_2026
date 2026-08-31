@@ -10,9 +10,12 @@ const Header = () => {
           {/* National Emblem */}
           <a href="/" className="shrink-0">
             <img
+              className="alignnone size-full wp-image-288"
               src={ASSETS.nationalEmblem}
               alt="National Emblem of India"
-              className="h-16 w-auto object-contain"
+              width="32"
+              height="52"
+              style={{ width: 32, height: 52, objectFit: 'contain' }}
               onError={e => { e.target.src = '/ashoka_emblem.jpg'; }}
             />
           </a>
