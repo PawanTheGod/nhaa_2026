@@ -605,9 +605,22 @@ function HomePage() {
   const [showImportantLinks, setShowImportantLinks] = useState(false);
 
   const personas = [
-    { title: 'Government Official', desc: 'Access administrative tools, reports & dashboards.', img: ASSETS.governmentOfficial },
-    { title: 'Beneficiary', desc: 'Discover schemes, scholarships & financial assistance.', img: ASSETS.beneficiary },
+    {
+      title: 'Beneficiary',
+      desc: 'Discover schemes, scholarships & financial assistance.',
+      img: ASSETS.beneficiary,
+      srcset: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2026/04/Beneficiary.png 268w, https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2026/04/Beneficiary-150x150.png 150w',
+      fallback: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2025/11/Beneficiary.png',
+    },
+    {
+      title: 'Government Official',
+      desc: 'Access administrative tools, reports & dashboards.',
+      img: ASSETS.governmentOfficial,
+      srcset: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2025/11/Government-Official.png 268w',
+      fallback: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2026/04/Government-Official.png',
+    },
   ];
+
 
   const offeringsData = tab === 'schemes' ? SCHEMES : tab === 'vacancies' ? VACANCIES : TENDERS;
 
@@ -1166,16 +1179,31 @@ function HomePage() {
                 }}
               >
                 <img
+                  loading="lazy"
+                  decoding="async"
                   src={personas[personaIdx].img}
+                  srcSet={personas[personaIdx].srcset}
+                  sizes="(max-width: 268px) 100vw, 268px"
                   alt={personas[personaIdx].title}
-                  style={{ height: 180, width: 'auto', objectFit: 'contain', marginBottom: 16 }}
+                  referrerPolicy="no-referrer"
+                  style={{
+                    height: 190,
+                    width: 'auto',
+                    maxWidth: '100%',
+                    objectFit: 'contain',
+                    marginBottom: 14,
+                    display: 'block',
+                  }}
                   onError={(e) => {
-                    e.target.style.display = 'none';
+                    if (personas[personaIdx].fallback && e.target.src !== personas[personaIdx].fallback) {
+                      e.target.src = personas[personaIdx].fallback;
+                    }
                   }}
                 />
                 <h4 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>
                   {personas[personaIdx].title}
                 </h4>
+
 
                 <button
                   onClick={() => setPersonaIdx((p) => (p === 0 ? 1 : 0))}
