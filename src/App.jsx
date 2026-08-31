@@ -316,9 +316,25 @@ function Header() {
             </div>
           </div>
 
-          <a href="https://digitalindia.gov.in/" target="_blank" rel="noreferrer" style={{ flexShrink: 0 }}>
-            <img src={ASSETS.digitalIndia} alt="Digital India" style={{ height: 44, width: 'auto' }} onError={e => e.target.style.display = 'none'} />
+          <a
+            href="https://digitalindia.gov.in/"
+            target="_blank"
+            rel="noreferrer"
+            style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}
+          >
+            <img
+              loading="lazy"
+              width="105"
+              height="41"
+              src={ASSETS.digitalIndia}
+              alt="Digital India"
+              style={{ width: 105, height: 41, objectFit: 'contain' }}
+              onError={(e) => {
+                e.target.src = 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2025/10/digital-india-logo.svg';
+              }}
+            />
           </a>
+
 
           <Link
             to="/samavesh"

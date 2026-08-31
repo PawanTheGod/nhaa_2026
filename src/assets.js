@@ -2,7 +2,7 @@ export const ASSETS = {
   nationalEmblem: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2025/10/National-Emblem-logo.svg',
   nationalEmblemWhite: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2025/11/National_Emblem_logo_white.svg',
   samavesh: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2026/05/samavesh.png',
-  digitalIndia: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2025/10/digital-india-logo.svg',
+  digitalIndia: 'https://www.dosje.gov.in/wp-content/uploads/2025/10/digital-india-logo.svg',
   digitalIndiaWhite: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2025/11/Digital-India-White.svg',
   indiaGov: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2025/10/india-gov.png',
   indianFlag: 'https://www.dosje.gov.in/wp-content/uploads/2025/10/Indian-Flag.svg',

@@ -62,10 +62,13 @@ const Header = () => {
           {/* Digital India */}
           <a href="https://digitalindia.gov.in/" target="_blank" rel="noreferrer" className="hidden lg:block shrink-0">
             <img
+              loading="lazy"
+              width="105"
+              height="41"
               src={ASSETS.digitalIndia}
               alt="Digital India"
               className="h-10 w-auto object-contain"
-              onError={e => e.target.style.display = 'none'}
+              onError={e => { e.target.src = 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2025/10/digital-india-logo.svg'; }}
             />
           </a>
         </div>
