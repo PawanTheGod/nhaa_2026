@@ -384,10 +384,8 @@ export default function NhaaPage() {
             </div>
 
             {/* Admin Login Button */}
-            <a
-              href="https://nhapoa-admin.dosje.gov.in/login"
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              to="/admin/district"
               style={{
                 background: '#003366',
                 color: '#FFFFFF',
@@ -399,9 +397,10 @@ export default function NhaaPage() {
                 boxShadow: '0 2px 6px rgba(0,51,102,0.2)',
                 transition: 'background 0.2s',
                 whiteSpace: 'nowrap',
+                display: 'inline-block',
               }}
             >
-              Admin Login
+              Admin Portal
             </a>
           </div>
         </div>

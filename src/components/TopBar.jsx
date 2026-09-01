@@ -44,12 +44,10 @@ const TopBar = () => {
           <span className="opacity-40">|</span>
           {/* Admin Login */}
           <a
-            href="https://www.dosje.gov.in/samavesh-admin-portals/"
-            target="_blank"
-            rel="noreferrer"
-            className="bg-[#FF6200] hover:bg-[#E8530A] text-white px-3 py-0.5 rounded text-[10px] font-semibold tracking-wide transition-colors"
+            href="#/admin/district"
+            className="bg-[#003366] hover:bg-[#002244] text-white px-3 py-0.5 rounded text-[10px] font-semibold tracking-wide transition-colors"
           >
-            Admin Login
+            Admin Portal
           </a>
         </div>
       </div>
