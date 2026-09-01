@@ -1,0 +1,96 @@
+/**
+ * Mock data for the District admin screen.
+ * Data shape (per data contract — Step 14):
+ *   {
+ *     id: string,          // case id, e.g. "NHAA-2026-8891"
+ *     riskTier: "low"|"moderate"|"high"|"critical",
+ *     slaDueDate: string,   // ISO 8601
+ *     district: string,
+ *     channel: "portal"|"chatbot"|"ivrs"|"mobile_app",
+ *     createdAt: string,     // ISO 8601
+ *     victimAgeGroup?: string,
+ *     isSilentSignal?: boolean,
+ *     incidentType?: string,
+ *     sviScore?: number,    // 0–100
+ *   }
+ */
+export const districtMockData = [
+  {
+    id: 'NHAA-2026-8842',
+    riskTier: 'critical',
+    sviScore: 92.4,
+    slaDueDate: '2026-09-01T16:00:00',
+    district: 'Central Delhi',
+    state: 'Delhi',
+    channel: 'ivrs',
+    createdAt: '2026-08-31T09:15:00',
+    victimAgeGroup: '18-25',
+    isSilentSignal: true,
+    incidentType: 'Physical assault + suicidal ideation',
+  },
+  {
+    id: 'NHAA-2026-8851',
+    riskTier: 'high',
+    sviScore: 78.1,
+    slaDueDate: '2026-09-01T18:30:00',
+    district: 'East Delhi',
+    state: 'Delhi',
+    channel: 'chatbot',
+    createdAt: '2026-08-31T11:30:00',
+    victimAgeGroup: '30-40',
+    isSilentSignal: false,
+    incidentType: 'Domestic violence threat',
+  },
+  {
+    id: 'NHAA-2026-8867',
+    riskTier: 'high',
+    sviScore: 68.5,
+    slaDueDate: '2026-09-02T10:00:00',
+    district: 'South Delhi',
+    state: 'Delhi',
+    channel: 'mobile_app',
+    createdAt: '2026-08-31T14:22:00',
+    victimAgeGroup: '22-30',
+    isSilentSignal: false,
+    incidentType: 'Intimidation by caste group',
+  },
+  {
+    id: 'NHAA-2026-8873',
+    riskTier: 'moderate',
+    sviScore: 45.3,
+    slaDueDate: '2026-09-02T14:00:00',
+    district: 'North Delhi',
+    state: 'Delhi',
+    channel: 'portal',
+    createdAt: '2026-08-31T16:45:00',
+    victimAgeGroup: '40-50',
+    isSilentSignal: false,
+    incidentType: 'Denial of livelihood',
+  },
+  {
+    id: 'NHAA-2026-8880',
+    riskTier: 'moderate',
+    sviScore: 38.7,
+    slaDueDate: '2026-09-03T12:00:00',
+    district: 'West Delhi',
+    state: 'Delhi',
+    channel: 'portal',
+    createdAt: '2026-09-01T08:10:00',
+    victimAgeGroup: '25-35',
+    isSilentSignal: false,
+    incidentType: 'Social boycott at workplace',
+  },
+  {
+    id: 'NHAA-2026-8891',
+    riskTier: 'low',
+    sviScore: 22.5,
+    slaDueDate: '2026-09-04T09:00:00',
+    district: 'Central Delhi',
+    state: 'Delhi',
+    channel: 'mobile_app',
+    createdAt: '2026-09-01T10:30:00',
+    victimAgeGroup: '50-60',
+    isSilentSignal: false,
+    incidentType: 'Information request on schemes',
+  },
+];

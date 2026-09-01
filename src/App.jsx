@@ -9,6 +9,14 @@ import VacanciesPage from './pages/VacanciesPage';
 import TendersPage from './pages/TendersPage';
 import ContactPage from './pages/ContactPage';
 import NhaaPage from './pages/NhaaPage';
+import DistrictScreen from './pages/admin/DistrictScreen';
+import StateScreen from './pages/admin/StateScreen';
+import MinistryScreen from './pages/admin/MinistryScreen';
+import AdminLayout from './components/admin/AdminLayout';
+
+const AdminShell = ({ children }) => (
+  <AdminLayout>{children}</AdminLayout>
+);
 
 // ─── Professional SVG Icons (No Emojis) ────────────────────
 const SearchIcon = () => (
@@ -1785,6 +1793,7 @@ function Footer() {
 // ─── ROUTER APP MAIN ───────────────────────────────────────
 function AppContent() {
   const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
   const isDedicatedPortal = location.pathname === '/nhaa' || location.pathname === '/sambal';
 
   return (
@@ -1797,19 +1806,23 @@ function AppContent() {
         </>
       )}
 
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/samavesh" element={<SamaveshPage />} />
-        <Route path="/about-us" element={<AboutUsPage />} />
-        <Route path="/schemes" element={<SchemesPage />} />
-        <Route path="/vacancies" element={<VacanciesPage />} />
-        <Route path="/tenders" element={<TendersPage />} />
-        <Route path="/contact-us" element={<ContactPage />} />
-        <Route path="/nhaa" element={<NhaaPage />} />
-        <Route path="/sambal" element={<NhaaPage />} />
-      </Routes>
+       <Routes>
+         <Route path="/" element={<HomePage />} />
+         <Route path="/samavesh" element={<SamaveshPage />} />
+         <Route path="/about-us" element={<AboutUsPage />} />
+         <Route path="/schemes" element={<SchemesPage />} />
+         <Route path="/vacancies" element={<VacanciesPage />} />
+         <Route path="/tenders" element={<TendersPage />} />
+         <Route path="/contact-us" element={<ContactPage />} />
+         <Route path="/nhaa" element={<NhaaPage />} />
+         <Route path="/sambal" element={<NhaaPage />} />
+         <Route path="/admin" element={<AdminShell><DistrictScreen /></AdminShell>} />
+         <Route path="/admin/district" element={<AdminShell><DistrictScreen /></AdminShell>} />
+         <Route path="/admin/state" element={<AdminShell><StateScreen /></AdminShell>} />
+         <Route path="/admin/ministry" element={<AdminShell><MinistryScreen /></AdminShell>} />
+       </Routes>
 
-      {!isDedicatedPortal && <Footer />}
+      {(!isDedicatedPortal && !isAdminRoute) && <Footer />}
     </>
   );
 }
