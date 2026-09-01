@@ -356,9 +356,9 @@ function Header() {
 
 
           <Link
-            to="/samavesh"
+            to="/admin/district"
             style={{
-              background: '#0073E6',
+              background: '#003366',
               color: '#fff',
               fontSize: 14,
               fontWeight: 600,
@@ -370,7 +370,7 @@ function Header() {
               transition: 'background 0.2s'
             }}
           >
-            Admin Login
+            Admin Portal
           </Link>
         </div>
       </div>
