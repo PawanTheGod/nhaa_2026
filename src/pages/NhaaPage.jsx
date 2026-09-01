@@ -401,7 +401,7 @@ export default function NhaaPage() {
               }}
             >
               Admin Portal
-            </a>
+            </Link>
           </div>
         </div>
       </header>
