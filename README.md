@@ -158,69 +158,57 @@ The synchronization test (`backend/tests/test_sync.py`) validates:
 
 ## 📡 Data Contract
 
-See [`backend/docs/data_contract.md`](backend/docs/data_contract.md) for the
-full field-by-field data contract shared between Vinit (backend), Pawan (frontend),
-Aditya (auth), Aatmman+Vedika (AI), and Pushp (notifications).
+See [`backend/docs/data_contract.md`](backend/docs/data_contract.md) for field shapes needed by each screen/endpoint.
 
 ---
 
-## 👤 Vinit's Domain (Central Database + Backend + Admin Screens)
+## 🚀 How to Run
 
-**Responsibilities:**
-- Central Case API (FastAPI + PostgreSQL/Supabase)
-- 7-table schema with Alembic migrations
-- Real-time WebSocket push for live updates
-- Role-based row filtering (operator, district, state, ministry)
-- 3 Supervisory Admin screens: District, State, Ministry
+### 1. Install dependencies (once):
+```bash
+npm install
+cd backend
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-### What was built and tested:
+### 2. Database setup:
+```bash
+# Copy template and fill in Supabase credentials
+cp backend/.env.example backend/.env
+# Note: URL-encode @ as %40 in your Supabase password
+cd backend
+.venv\Scripts\activate
+python -m alembic upgrade head
+```
 
-1. **Schema & Migrations (7 tables):**
-   - `cases` — case records with channel_of_origin, status, district, state
-   - `victims` — pseudonymous victim references (never store PII in plain text)
-   - `risk_assessments` — SVI scores, risk tiers, flags (JSON), explanations
-   - `officers` — role-based access (operator, district, state, ministry, police, etc.)
-   - `notifications` — delivery tracking for response agencies
-   - `audit_logs` — append-only log of all actions
-   - `sla_deadlines` — legal deadline tracking per case
+### 3. Start servers:
+```bash
+# Terminal 1 - Backend (port 8000)
+cd backend
+.venv\Scripts\activate
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 
-2. **API Endpoints:**
-   - `POST /api/cases/` — create case from any channel
-   - `GET /api/cases/` — list cases (filtered by role/district/state query params)
-   - `GET /api/cases/{id}` — full detail including risk assessments
-   - `PATCH /api/cases/{id}` — update status
-   - `POST /api/risk-assessments/` — AI module posts scores
-   - `GET /api/risk-assessments/case/{id}` — get assessments for a case
-   - `GET /api/stats/*` — aggregate statistics for dashboards
-   - `WebSocket /ws` — real-time broadcast of case/risk changes
+# Terminal 2 - Frontend (port 5174)
+cd D:\sih2026\dosje-clone
+npm run dev
+```
 
-3. **Admin Screens (accessible at `/admin/*`):**
-   - `/admin/district` — Case queue sorted by risk tier, SLACountdown per row, Escalate button, WebSocket live updates
-   - `/admin/state` — StatsCards (totals, tier breakdown, resolution rate), TrendChart, StateComparisonTable
-   - `/admin/ministry` — National overview with StateComparisonTable and TrendCharts
+### 4. Run tests:
+```bash
+cd backend
+.venv\Scripts\activate
+python -m pytest tests/test_sync.py -v -s
+```
 
-4. **Reusable Components:**
-   - `RiskBadge` — color-coded risk tier display
-   - `SLACountdown` — deadline timer with amber→red color shift
-   - `StatsCard` — labelled aggregate number
-   - `TrendChart` — line/bar chart using Recharts
-   - `StateComparisonTable` — sortable comparison table
+### Access your admin screens:
+- `http://localhost:5174/nhaa_2026/#/admin/district`
+- `http://localhost:5174/nhaa_2026/#/admin/state`
+- `http://localhost:5174/nhaa_2026/#/admin/ministry`
 
-### Sync Verification (Step 8 requirement):
-All 7 tests in `backend/tests/test_sync.py` pass — confirmed that:
-- 4 simulated channel POSTs (Portal, Chatbot, IVRS, Mobile App) all appear in `GET /cases`
-- All 4 trigger WebSocket push events within 1-2 seconds
-- Role-based filtering blocks district officers from other districts' cases
-- AI risk assessments link to cases and trigger WS events
-- PATCH updates trigger WS events
-- Audit log captures all actions (append-only)
-- Full end-to-end pipeline works: Portal case → AI assessment → status update → audit trail
-
-### Supabase Migration Notes:
-- Connection string requires URL-encoded `@` characters in password (`@` → `%40`)
-- `alembic/env.py` must escape `%` as `%%` for configparser interpolation
-- Enum types use `DO $$ ... EXCEPTION WHEN duplicate_object` blocks for idempotency
-- Use `postgresql.ENUM(..., create_type=False)` in migrations when enum already exists
+### API docs:
+- `http://localhost:8000/docs`
 
 ---
 
