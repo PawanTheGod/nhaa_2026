@@ -36,4 +36,7 @@ backend/alembic/versions/*.pyc
 # Environment
 .env
 .env.local
+backend/.env
+**/.env
+!.env.example
 
