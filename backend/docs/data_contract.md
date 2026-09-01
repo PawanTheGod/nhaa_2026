@@ -219,3 +219,68 @@ State table expects:
 **This table MUST NOT be updated or deleted from.** Every officer action
 and AI score is recorded here for compliance and the AI-vs-officer
 consistency check (USP 3).
+
+---
+
+## 7. Pawan Admin Screens (Login, Operator, Responder)
+
+### Login (`POST /auth/login` — Aditya, Step 12)
+
+**Request:**
+```json
+{ "username": "operator", "password": "..." }
+```
+
+**Response:**
+```json
+{
+  "token": "jwt...",
+  "role": "operator",
+  "name": "Priya Sharma",
+  "district": "Central Delhi",
+  "state": "Delhi"
+}
+```
+
+**Redirect map:** `operator` → `/admin/operator`; `police|dlsa|medical|counselor|witness_protection` → `/admin/responder`; `district|state|ministry` → Vinit routes.
+
+### Operator Screen — CaseTable row
+
+Uses same `CaseOut` fields as Section 1, plus for detail panel:
+- `explanation_text` (string)
+- `recommended_action` (string)
+- `flags` (JSON object)
+- `notifications[]`: `{ recipient_role, channel, sent_at, status }`
+
+### Operator — Critical confirm (`POST /api/decisions/confirm` — Aditya)
+
+```json
+{ "case_id": 1001, "action": "confirm_critical_dispatch", "officer_id": "..." }
+```
+
+### Responder Screen — ResponderTaskCard
+
+```json
+{
+  "case_id": 1001,
+  "responder_type": "police",
+  "svi_score": 94.5,
+  "risk_tier": "critical",
+  "recommended_action": "police_intervention",
+  "channel_of_origin": "ivrs",
+  "created_at": "ISO8601",
+  "district": "Central Delhi",
+  "incident_description": "...",
+  "actioned": false
+}
+```
+
+**Filter:** `responder_type` must match JWT `role`.
+
+### Responder — Mark actioned (`PATCH /api/decisions/{case_id}/actioned` — Aditya)
+
+```json
+{ "responder_type": "police", "actioned": true }
+```
+
+Mock data files: `src/data/operatorMockCases.js`, `src/data/responderMockCases.js`, `src/data/mockUsers.js`.
