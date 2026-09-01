@@ -1,3 +1,5 @@
+import monaIAS from './assets/mona_IAS.png';
+
 export const ASSETS = {
   nationalEmblem: 'https://www.dosje.gov.in/wp-content/uploads/2025/10/National-Emblem-logo.svg',
   nationalEmblemWhite: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2025/11/National_Emblem_logo_white.svg',
@@ -17,6 +19,7 @@ export const ASSETS = {
   banner5: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2026/06/banner-5a.jpg',
 
   // Leadership & Personas
+  monaIAS,
   drVirendraKumar: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2026/07/Dr.-Virendra-Kumar.png',
   ramdas: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2026/04/Shri-Ramdas-Athawale.png',
   blVerma: 'https://durwo6bhtjtqt.cloudfront.net/wp-content/uploads/2026/04/sri-l-b-verma.png',

@@ -9,9 +9,13 @@ import VacanciesPage from './pages/VacanciesPage';
 import TendersPage from './pages/TendersPage';
 import ContactPage from './pages/ContactPage';
 import NhaaPage from './pages/NhaaPage';
+import NhaaOrganisationPage from './pages/organisation/NhaaOrganisationPage';
 import DistrictScreen from './pages/admin/DistrictScreen';
 import StateScreen from './pages/admin/StateScreen';
 import MinistryScreen from './pages/admin/MinistryScreen';
+import LoginScreen from './pages/admin/LoginScreen';
+import OperatorScreen from './pages/admin/OperatorScreen';
+import ResponderScreen from './pages/admin/ResponderScreen';
 import AdminLayout from './components/admin/AdminLayout';
 
 const AdminShell = ({ children }) => (
@@ -118,7 +122,7 @@ const MEGA_COLUMN_2 = {
 const MEGA_COLUMN_3 = {
   title: 'SCHEME SPECIFIC THEMATIC PORTALS',
   items: [
-    { code: 'SAMBAL (NHAA)', label: 'National Helpline Against Atrocities', logo: ASSETS.sambal, path: '/nhaa' },
+    { code: 'SAMBAL (NHAA)', label: 'National Helpline Against Atrocities', logo: ASSETS.sambal, path: '/organisation/national-helpline-against-atrocities' },
     { code: 'SCW', label: 'Senior Citizens Welfare', logo: ASSETS.scw, path: '/samavesh' },
     { code: 'PM-AJAY', label: 'Pradhan Mantri Anusuchit Jaati Abhyuday Yojna', logo: ASSETS.pmajay, path: '/schemes' },
     { code: 'SMILE - Transgender', label: 'National Portal for Transgender Persons', logo: ASSETS.transgender, path: '/samavesh' },
@@ -158,7 +162,7 @@ const SCHEMES = [
     title: 'Centrally Sponsored Scheme for PCR Act 1955 & POA Act 1989',
     subtitle: 'About the Scheme Article 17 of the Constitution',
     snippet: "Article 17 of the Constitution of India has abolished 'untouchability', and forbidden its practice in any form. Provides financial relief & legal aid to victims...",
-    path: '/nhaa',
+    path: '/organisation/national-helpline-against-atrocities',
   },
   {
     title: 'Top Class Education in College for OBC, EBC and DNT Students',
@@ -1814,9 +1818,13 @@ function AppContent() {
          <Route path="/vacancies" element={<VacanciesPage />} />
          <Route path="/tenders" element={<TendersPage />} />
          <Route path="/contact-us" element={<ContactPage />} />
+         <Route path="/organisation/national-helpline-against-atrocities" element={<NhaaOrganisationPage />} />
          <Route path="/nhaa" element={<NhaaPage />} />
          <Route path="/sambal" element={<NhaaPage />} />
-         <Route path="/admin" element={<AdminShell><DistrictScreen /></AdminShell>} />
+         <Route path="/admin/login" element={<LoginScreen />} />
+         <Route path="/admin" element={<LoginScreen />} />
+         <Route path="/admin/operator" element={<AdminShell><OperatorScreen /></AdminShell>} />
+         <Route path="/admin/responder" element={<AdminShell><ResponderScreen /></AdminShell>} />
          <Route path="/admin/district" element={<AdminShell><DistrictScreen /></AdminShell>} />
          <Route path="/admin/state" element={<AdminShell><StateScreen /></AdminShell>} />
          <Route path="/admin/ministry" element={<AdminShell><MinistryScreen /></AdminShell>} />
