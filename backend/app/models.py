@@ -70,6 +70,7 @@ class Cases(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
     status = Column(Enum(CaseStatus, name="case_status"), nullable=False, default=CaseStatus.new)
+    current_level = Column(String(50), nullable=True, comment="police, district, state, or ministry")
     district = Column(String(100), nullable=True)
     state = Column(String(100), nullable=True)
 
@@ -147,6 +148,7 @@ class Officers(Base):
         Index("idx_officers_role", "role"),
         Index("idx_officers_district", "district"),
         Index("idx_officers_state", "state"),
+        Index("idx_officers_username", "username", unique=True),
     )
 
     id = Column(BigInt, primary_key=True, autoincrement=True)
@@ -157,6 +159,10 @@ class Officers(Base):
     badge_id = Column(String(50), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    # ── Auth credentials (added by Aditya — auth layer) ────────────────────
+    username = Column(String(100), nullable=True, unique=True)
+    password_hash = Column(String(255), nullable=True)
 
     cases = relationship("Cases", back_populates="assigned_officer")
 
