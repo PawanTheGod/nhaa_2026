@@ -40,6 +40,43 @@ from app.routes.audit import log_action
 
 router = APIRouter(tags=["admin-panel"])
 
+# Live Supabase `cases.current_level` is INTEGER (0–3). Admin actions historically
+# wrote role strings. Map both ways so JWT admin routes work against Vinit's schema.
+_LEVEL_INT_TO_NAME = {0: "operator", 1: "district", 2: "state", 3: "ministry"}
+_LEVEL_NAME_TO_INT = {v: k for k, v in _LEVEL_INT_TO_NAME.items()}
+
+
+def _level_to_api(level: Any) -> Optional[str]:
+    """Serialize DB level (int or str) as role name for the frontend contract."""
+    if level is None or level == "":
+        return None
+    try:
+        as_int = int(level)
+        if as_int in _LEVEL_INT_TO_NAME:
+            return _LEVEL_INT_TO_NAME[as_int]
+    except (TypeError, ValueError):
+        pass
+    key = str(level).lower()
+    if key in _LEVEL_NAME_TO_INT:
+        return key
+    return key
+
+
+def _level_to_db(level_name: Optional[str]) -> Optional[int]:
+    if level_name is None:
+        return None
+    return _LEVEL_NAME_TO_INT.get(str(level_name).lower())
+
+
+def _level_to_officer_role(level: Any) -> Optional[OfficerRole]:
+    name = _level_to_api(level)
+    if not name:
+        return None
+    try:
+        return OfficerRole(name)
+    except ValueError:
+        return None
+
 
 # ── DB dependency ─────────────────────────────────────────────────────────────
 
@@ -90,7 +127,7 @@ def _case_list_item(case: Cases) -> dict[str, Any]:
         "id": case.id,
         "case_id": case.id,
         "status": case.status.value if case.status else None,
-        "current_level": case.current_level,
+        "current_level": _level_to_api(case.current_level),
         "channel_of_origin": case.channel_of_origin.value if case.channel_of_origin else None,
         "district": case.district,
         "state": case.state,
@@ -298,12 +335,7 @@ async def get_allowed_actions(
     from app.services.agent.decision_engine import get_allowed_actions as engine_allowed, check_authority
     from app.models import OfficerRole
 
-    current_lvl_enum = None
-    if case.current_level:
-        try:
-            current_lvl_enum = OfficerRole(case.current_level)
-        except ValueError:
-            pass
+    current_lvl_enum = _level_to_officer_role(case.current_level)
 
     officer_enum = OfficerRole(officer.role)
     actions = engine_allowed(case.status, current_lvl_enum)
@@ -360,16 +392,16 @@ async def process_case_action(
         case.current_level = None
     elif action == "escalate_to_district":
         case.status = CaseStatus.escalated
-        case.current_level = "district"
+        case.current_level = _level_to_db("district")
     elif action == "escalate_to_state":
         case.status = CaseStatus.escalated
-        case.current_level = "state"
+        case.current_level = _level_to_db("state")
     elif action == "escalate_to_ministry":
         case.status = CaseStatus.escalated
-        case.current_level = "ministry"
+        case.current_level = _level_to_db("ministry")
     elif action == "assign_operator":
         case.status = CaseStatus.in_progress
-        case.current_level = "operator"
+        case.current_level = _level_to_db("operator")
     elif action in ["dispatch_police", "dispatch_dlsa", "direct_intervention", "ai_triage"]:
         # Actions that don't strictly change status/level right now
         pass
@@ -384,7 +416,7 @@ async def process_case_action(
         actor=officer.sub,
         action=f"case_action_{action}",
         case_id=case.id,
-        details={"previous_status": previous_status, "new_status": case.status.value, "notes": payload.notes, "current_level": case.current_level},
+        details={"previous_status": previous_status, "new_status": case.status.value, "notes": payload.notes, "current_level": _level_to_api(case.current_level)},
     )
 
     if ws_manager is not None:
@@ -393,7 +425,7 @@ async def process_case_action(
             "data": _case_list_item(case),
         })
 
-    return {"message": "Action processed", "status": case.status.value, "current_level": case.current_level}
+    return {"message": "Action processed", "status": case.status.value, "current_level": _level_to_api(case.current_level)}
 
 
 # ─────────────────────────────────────────────────────────────────────────────

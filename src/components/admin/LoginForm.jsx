@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
-export default function LoginForm({ onSubmit, error }) {
+export default function LoginForm({ onSubmit, error, busy = false }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (busy) return;
     onSubmit({ username, password });
   };
 
@@ -21,9 +22,10 @@ export default function LoginForm({ onSubmit, error }) {
           type="text"
           autoComplete="username"
           required
+          disabled={busy}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="e.g. operator, police, district"
+          placeholder="e.g. operator, op_delhi_01"
           style={{
             width: '100%',
             padding: '12px 14px',
@@ -43,9 +45,10 @@ export default function LoginForm({ onSubmit, error }) {
           type="password"
           autoComplete="current-password"
           required
+          disabled={busy}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="demo123"
+          placeholder="Test@1234"
           style={{
             width: '100%',
             padding: '12px 14px',
@@ -63,6 +66,7 @@ export default function LoginForm({ onSubmit, error }) {
       )}
       <button
         type="submit"
+        disabled={busy}
         style={{
           background: '#0073E6',
           color: '#fff',
@@ -71,13 +75,15 @@ export default function LoginForm({ onSubmit, error }) {
           padding: '12px 20px',
           fontSize: 14,
           fontWeight: 700,
-          cursor: 'pointer',
+          cursor: busy ? 'wait' : 'pointer',
+          opacity: busy ? 0.75 : 1,
         }}
       >
-        Sign In
+        {busy ? 'Signing in…' : 'Sign In'}
       </button>
       <p id="login-demo-hint" style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.6 }}>
-        Demo accounts: operator / police / dlsa / medical / counselor / witness / district / state / ministry — password: demo123
+        Use <code>operator</code> / <code>Test@1234</code> (or <code>demo123</code>).
+        Works offline with mock data; with backend running you get a live JWT.
       </p>
     </form>
   );
@@ -86,4 +92,5 @@ export default function LoginForm({ onSubmit, error }) {
 LoginForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   error: PropTypes.string,
+  busy: PropTypes.bool,
 };
