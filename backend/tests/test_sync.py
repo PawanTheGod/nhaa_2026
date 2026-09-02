@@ -207,12 +207,16 @@ async def test_4_ai_risk_assessment_updates_case(client, ws_conn):
 
     ws_conn.clear()
 
-    # AI module posts a risk assessment
+    # AI module posts a risk assessment (using Aatmman's nested flag shape)
     ra_payload = {
         "case_id": case_id,
         "svi_score": 87.5,
         "risk_tier": "critical",
-        "flags": {"trauma": True, "suicidal_ideation": True, "intimidation": True},
+        "flags": {
+            "trauma": {"present": True, "confidence": 0.82, "signals": ["shaking_voice", "crying"]},
+            "suicidal_ideation": {"present": True, "confidence": 0.91, "signals": ["keywords:k*ll", "phrases:no_way_out"]},
+            "intimidation": {"present": True, "confidence": 0.76, "signals": ["long_pauses", "third_party_in_room"]},
+        },
         "explanation_text": "High pitch variability, long pauses, keywords: 'kill me', 'no way out' detected.",
         "model_version": "nhs-emotion-v2.1",
     }
@@ -303,12 +307,17 @@ async def test_7_end_to_end_full_pipeline(client):
     assert resp.status_code == 201
     case_id = resp.json()["id"]
 
-    # 2. AI module posts risk assessment
+    # 2. AI module posts risk assessment (nested flags shape)
     resp = await client.post("/api/risk-assessments/", json={
         "case_id": case_id,
         "svi_score": 95.0,
         "risk_tier": "critical",
-        "flags": {"trauma": True, "fear": True, "suicidal_ideation": True, "intimidation": True},
+        "flags": {
+            "trauma": {"present": True, "confidence": 0.88, "signals": ["crying"]},
+            "fear": {"present": True, "confidence": 0.92, "signals": ["rapid_speech"]},
+            "suicidal_ideation": {"present": True, "confidence": 0.95, "signals": ["explicit_phrases"]},
+            "intimidation": {"present": True, "confidence": 0.84, "signals": ["background_voice"]},
+        },
         "explanation_text": "Critical: high distress, explicit suicidal ideation, fear of retaliation.",
         "model_version": "nhs-emotion-v2.1",
     }, params={"actor": "ai_module"})

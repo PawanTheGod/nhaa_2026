@@ -45,7 +45,8 @@ both halves of the panel.
     "assigned_officer_id": null,
     "svi_score": 87.5,          // numeric(4,2) | null
     "risk_tier": "critical",    // enum: low | moderate | high | critical | null
-    "recommended_action": "police_intervention", // string | null
+    "recommended_action": "police_intervention", // string | null (always included by AI)
+    "current_level": 1,         // int: 0=operator, 1=district, 2=state, 3=ministry
     "risk_assessments": []       // array of RiskAssessmentMini (empty for list view)
   }
 ]
@@ -82,16 +83,24 @@ both halves of the panel.
   "svi_score": 87.5,
   "risk_tier": "critical",
   "flags": {
-    "trauma": true,
-    "fear": true,
-    "suicidal_ideation": true,
-    "intimidation": true,
-    "isolation": false
+    "trauma": { "present": true, "confidence": 0.82, "signals": ["shaking_voice", "crying"] },
+    "fear": { "present": true, "confidence": 0.76, "signals": ["rapid_speech", "hesitation"] },
+    "suicidal_ideation": { "present": false, "confidence": 0.05, "signals": [] },
+    "intimidation": { "present": true, "confidence": 0.88, "signals": ["third_party_in_room"] },
+    "isolation": { "present": false, "confidence": 0.10, "signals": [] }
   },
-  "explanation_text": "High pitch variability detected...",
+  "explanation_text": "High pitch variability detected; multiple trauma markers present...",
   "model_version": "nhs-emotion-v2.1"
 }
 ```
+
+**Flags shape (final — per Aatmman):**
+Each flag is a nested object with:
+- `present` (bool) — whether this flag was detected
+- `confidence` (float 0-1) — model confidence
+- `signals` (list of strings) — specific signals that triggered this flag
+
+NOT a flat boolean. The Case API stores the full nested object in `risk_assessments.flags` as JSON.
 
 ### Output JSON (RiskAssessmentOut)
 
