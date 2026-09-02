@@ -6,6 +6,7 @@ from app.routes.risk_assessments import router as ra_router
 from app.routes.websocket import router as ws_router
 from app.routes.stats import router as stats_router
 from app.routes.notifications import router as notifications_router
+from app.routes.agent import router as agent_router
 from app.config import settings
 
 
@@ -40,6 +41,7 @@ app.include_router(cases_router, prefix="/api")
 app.include_router(ra_router, prefix="/api")
 app.include_router(stats_router, prefix="/api")
 app.include_router(notifications_router, prefix="/api")
+app.include_router(agent_router, prefix="/api")
 app.include_router(ws_router)
 
 # Register Vedika's AI Perception Layer Routers
