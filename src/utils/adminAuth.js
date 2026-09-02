@@ -1,6 +1,23 @@
 const SESSION_KEY = 'nhaa_admin_session';
 
+/** Five agency roles that share /admin/responder (filtered by session.role). */
 export const RESPONDER_ROLES = ['police', 'dlsa', 'medical', 'counselor', 'witness_protection'];
+
+/**
+ * All 9 officer_role enum values (Vinit schema).
+ * operator | district | state | ministry | police | dlsa | medical | counselor | witness_protection
+ */
+export const ALL_ROLES = [
+  'operator',
+  'district',
+  'state',
+  'ministry',
+  'police',
+  'dlsa',
+  'medical',
+  'counselor',
+  'witness_protection',
+];
 
 export const ROLE_LABELS = {
   operator: 'Call Centre Operator',
@@ -14,6 +31,19 @@ export const ROLE_LABELS = {
   ministry: 'Ministry Oversight (MoSJE)',
 };
 
+/** Explicit post-login redirect for every role value. */
+export const ROLE_REDIRECTS = {
+  operator: '/admin/operator',
+  police: '/admin/responder',
+  dlsa: '/admin/responder',
+  medical: '/admin/responder',
+  counselor: '/admin/responder',
+  witness_protection: '/admin/responder',
+  district: '/admin/district',
+  state: '/admin/state',
+  ministry: '/admin/ministry',
+};
+
 export function getSession() {
   try {
     const raw = localStorage.getItem(SESSION_KEY);
@@ -24,6 +54,7 @@ export function getSession() {
 }
 
 export function setSession(user) {
+  // Persist role so Responder can filter assigned cases by session.role
   localStorage.setItem(SESSION_KEY, JSON.stringify(user));
 }
 
@@ -32,16 +63,5 @@ export function clearSession() {
 }
 
 export function getRedirectForRole(role) {
-  const routes = {
-    operator: '/admin/operator',
-    police: '/admin/responder',
-    dlsa: '/admin/responder',
-    medical: '/admin/responder',
-    counselor: '/admin/responder',
-    witness_protection: '/admin/responder',
-    district: '/admin/district',
-    state: '/admin/state',
-    ministry: '/admin/ministry',
-  };
-  return routes[role] || '/admin/login';
+  return ROLE_REDIRECTS[role] || '/admin/login';
 }

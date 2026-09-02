@@ -1,6 +1,10 @@
 /**
- * Mock cases for Operator dashboard (Step 8).
- * Field names align with backend/docs/data_contract.md for Step 12 API swap.
+ * Mock cases for Operator dashboard.
+ * Field names align with backend/docs/data_contract.md.
+ *
+ * channel_of_origin: portal | chatbot | ivrs | mobile_app
+ * risk_tier: low | moderate | high | critical
+ * flags: nested { present, confidence, signals[] } per Aatmman/Vedika
  */
 export const operatorMockCases = [
   {
@@ -17,7 +21,13 @@ export const operatorMockCases = [
     is_silent_signal: true,
     recommended_action: 'police_intervention',
     explanation_text: 'Critical SVI: high pitch variability, fear markers, suicidal ideation flag, intimidation detected. Immediate multi-agency response recommended.',
-    flags: { trauma: true, fear: true, suicidal_ideation: true, intimidation: true, isolation: false },
+    flags: {
+      trauma: { present: true, confidence: 0.91, signals: ['voice tremor', 'high pitch variability'] },
+      fear: { present: true, confidence: 0.88, signals: ['hesitation markers', 'whisper segments'] },
+      suicidal_ideation: { present: true, confidence: 0.76, signals: ['keyword: end it', 'long pause: 4.2s'] },
+      intimidation: { present: true, confidence: 0.84, signals: ['threat language', 'third-party pressure'] },
+      isolation: { present: false, confidence: 0.12, signals: [] },
+    },
     notifications: [
       { recipient_role: 'police', channel: 'sms', sent_at: '2026-08-31T08:12:30+05:30', status: 'sent' },
       { recipient_role: 'witness_protection', channel: 'system', sent_at: '2026-08-31T08:12:31+05:30', status: 'sent' },
@@ -37,7 +47,13 @@ export const operatorMockCases = [
     is_silent_signal: false,
     recommended_action: 'legal_aid',
     explanation_text: 'High distress in narrative text; fear and intimidation flags. Legal aid and police notification suggested.',
-    flags: { trauma: true, fear: true, suicidal_ideation: false, intimidation: true, isolation: true },
+    flags: {
+      trauma: { present: true, confidence: 0.72, signals: ['narrative distress markers'] },
+      fear: { present: true, confidence: 0.81, signals: ['avoidance language'] },
+      suicidal_ideation: { present: false, confidence: 0.08, signals: [] },
+      intimidation: { present: true, confidence: 0.79, signals: ['boycott threat', 'community pressure'] },
+      isolation: { present: true, confidence: 0.68, signals: ['denied public access'] },
+    },
     notifications: [
       { recipient_role: 'dlsa', channel: 'email', sent_at: '2026-08-31T09:46:00+05:30', status: 'sent' },
       { recipient_role: 'police', channel: 'sms', sent_at: '2026-08-31T09:46:01+05:30', status: 'sent' },
@@ -57,7 +73,13 @@ export const operatorMockCases = [
     is_silent_signal: false,
     recommended_action: 'counselling',
     explanation_text: 'Moderate emotional distress; depression indicators present. Counselling referral appropriate.',
-    flags: { trauma: true, fear: false, suicidal_ideation: false, intimidation: false, isolation: false },
+    flags: {
+      trauma: { present: true, confidence: 0.61, signals: ['workplace discrimination narrative'] },
+      fear: { present: false, confidence: 0.22, signals: [] },
+      suicidal_ideation: { present: false, confidence: 0.05, signals: [] },
+      intimidation: { present: false, confidence: 0.18, signals: [] },
+      isolation: { present: false, confidence: 0.15, signals: [] },
+    },
     notifications: [
       { recipient_role: 'counselor', channel: 'system', sent_at: '2026-08-31T10:21:00+05:30', status: 'pending' },
     ],
@@ -76,7 +98,13 @@ export const operatorMockCases = [
     is_silent_signal: false,
     recommended_action: 'standard_follow_up',
     explanation_text: 'Low distress signals; routine follow-up queue. No escalation required.',
-    flags: { trauma: false, fear: false, suicidal_ideation: false, intimidation: false, isolation: false },
+    flags: {
+      trauma: { present: false, confidence: 0.04, signals: [] },
+      fear: { present: false, confidence: 0.06, signals: [] },
+      suicidal_ideation: { present: false, confidence: 0.02, signals: [] },
+      intimidation: { present: false, confidence: 0.03, signals: [] },
+      isolation: { present: false, confidence: 0.05, signals: [] },
+    },
     notifications: [],
   },
   {
@@ -93,7 +121,13 @@ export const operatorMockCases = [
     is_silent_signal: false,
     recommended_action: 'medical_assistance',
     explanation_text: 'High trauma and fear scores from voice analysis. Medical and police coordination needed.',
-    flags: { trauma: true, fear: true, suicidal_ideation: false, intimidation: true, isolation: false },
+    flags: {
+      trauma: { present: true, confidence: 0.89, signals: ['pain vocalisations', 'assault keywords'] },
+      fear: { present: true, confidence: 0.85, signals: ['elevated pitch', 'rapid speech'] },
+      suicidal_ideation: { present: false, confidence: 0.09, signals: [] },
+      intimidation: { present: true, confidence: 0.74, signals: ['perpetrator nearby mention'] },
+      isolation: { present: false, confidence: 0.2, signals: [] },
+    },
     notifications: [
       { recipient_role: 'medical', channel: 'sms', sent_at: '2026-08-31T11:30:45+05:30', status: 'sent' },
       { recipient_role: 'police', channel: 'sms', sent_at: '2026-08-31T11:30:46+05:30', status: 'sent' },
@@ -113,7 +147,13 @@ export const operatorMockCases = [
     is_silent_signal: false,
     recommended_action: 'legal_aid',
     explanation_text: 'Moderate vulnerability; legal aid referral matches recommended action mapping.',
-    flags: { trauma: false, fear: true, suicidal_ideation: false, intimidation: false, isolation: false },
+    flags: {
+      trauma: { present: false, confidence: 0.18, signals: [] },
+      fear: { present: true, confidence: 0.55, signals: ['concern about FIR delay'] },
+      suicidal_ideation: { present: false, confidence: 0.04, signals: [] },
+      intimidation: { present: false, confidence: 0.21, signals: [] },
+      isolation: { present: false, confidence: 0.11, signals: [] },
+    },
     notifications: [
       { recipient_role: 'dlsa', channel: 'email', sent_at: '2026-08-31T12:01:00+05:30', status: 'delivered' },
     ],
@@ -132,7 +172,13 @@ export const operatorMockCases = [
     is_silent_signal: true,
     recommended_action: 'emergency_escalation',
     explanation_text: 'Covert escalation detected (USP 1). Critical tier despite neutral visible conversation text.',
-    flags: { trauma: true, fear: true, suicidal_ideation: false, intimidation: true, isolation: true },
+    flags: {
+      trauma: { present: true, confidence: 0.82, signals: ['covert distress keyword'] },
+      fear: { present: true, confidence: 0.8, signals: ['session abandonment pattern'] },
+      suicidal_ideation: { present: false, confidence: 0.14, signals: [] },
+      intimidation: { present: true, confidence: 0.77, signals: ['coded threat phrase'] },
+      isolation: { present: true, confidence: 0.65, signals: ['no safe contact listed'] },
+    },
     notifications: [
       { recipient_role: 'police', channel: 'system', sent_at: '2026-08-31T13:15:10+05:30', status: 'sent' },
       { recipient_role: 'witness_protection', channel: 'system', sent_at: '2026-08-31T13:15:11+05:30', status: 'sent' },
@@ -153,7 +199,13 @@ export const operatorMockCases = [
     is_silent_signal: false,
     recommended_action: 'information_only',
     explanation_text: 'Informational query; no distress indicators in text input.',
-    flags: { trauma: false, fear: false, suicidal_ideation: false, intimidation: false, isolation: false },
+    flags: {
+      trauma: { present: false, confidence: 0.03, signals: [] },
+      fear: { present: false, confidence: 0.04, signals: [] },
+      suicidal_ideation: { present: false, confidence: 0.01, signals: [] },
+      intimidation: { present: false, confidence: 0.02, signals: [] },
+      isolation: { present: false, confidence: 0.03, signals: [] },
+    },
     notifications: [],
   },
 ];

@@ -82,16 +82,18 @@ both halves of the panel.
   "svi_score": 87.5,
   "risk_tier": "critical",
   "flags": {
-    "trauma": true,
-    "fear": true,
-    "suicidal_ideation": true,
-    "intimidation": true,
-    "isolation": false
+    "trauma": { "present": true, "confidence": 0.82, "signals": ["long pause: 4.2s"] },
+    "fear": { "present": true, "confidence": 0.88, "signals": ["voice tremor"] },
+    "suicidal_ideation": { "present": true, "confidence": 0.76, "signals": ["keyword match"] },
+    "intimidation": { "present": true, "confidence": 0.84, "signals": ["threat language"] },
+    "isolation": { "present": false, "confidence": 0.12, "signals": [] }
   },
   "explanation_text": "High pitch variability detected...",
   "model_version": "nhs-emotion-v2.1"
 }
 ```
+
+> **Flags note:** Phase-2 nested shape from Aatmman/Vedika (`present`, `confidence`, `signals[]`). CaseDetailPanel also tolerates legacy flat booleans.
 
 ### Output JSON (RiskAssessmentOut)
 
@@ -260,10 +262,12 @@ Uses same `CaseOut` fields as Section 1, plus for detail panel:
 
 ### Responder Screen — ResponderTaskCard
 
+Uses the shared `role` enum (same field as officers / JWT), not a separate `responder_type`:
+
 ```json
 {
   "case_id": 1001,
-  "responder_type": "police",
+  "role": "police",
   "svi_score": 94.5,
   "risk_tier": "critical",
   "recommended_action": "police_intervention",
@@ -275,12 +279,44 @@ Uses same `CaseOut` fields as Section 1, plus for detail panel:
 }
 ```
 
-**Filter:** `responder_type` must match JWT `role`.
+**Filter:** `role` must match JWT `role` (one of: `police`, `dlsa`, `medical`, `counselor`, `witness_protection`).
 
 ### Responder — Mark actioned (`PATCH /api/decisions/{case_id}/actioned` — Aditya)
 
 ```json
-{ "responder_type": "police", "actioned": true }
+{ "role": "police", "actioned": true }
 ```
+
+### Flags shape (Aatmman / Vedika — CaseDetailPanel)
+
+```json
+{
+  "trauma": { "present": true, "confidence": 0.82, "signals": ["long pause: 4.2s"] },
+  "fear": { "present": true, "confidence": 0.88, "signals": ["voice tremor"] },
+  "suicidal_ideation": { "present": false, "confidence": 0.05, "signals": [] },
+  "intimidation": { "present": true, "confidence": 0.84, "signals": ["threat language"] },
+  "isolation": { "present": false, "confidence": 0.12, "signals": [] }
+}
+```
+
+### Login redirects (all 9 roles)
+
+| role | route |
+|------|-------|
+| `operator` | `/admin/operator` |
+| `police`, `dlsa`, `medical`, `counselor`, `witness_protection` | `/admin/responder` |
+| `district` | `/admin/district` |
+| `state` | `/admin/state` |
+| `ministry` | `/admin/ministry` |
+
+### WebSocket events (Operator live table)
+
+`ws://localhost:8000/ws` — payload `{ "event", "data", "timestamp" }`
+
+| event | Operator behaviour |
+|-------|--------------------|
+| `case_created` | Prepend new row |
+| `case_updated` | Update matching row risk badge / fields |
+| `risk_assessment_created` | Update matching row risk badge / fields |
 
 Mock data files: `src/data/operatorMockCases.js`, `src/data/responderMockCases.js`, `src/data/mockUsers.js`.

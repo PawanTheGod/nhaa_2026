@@ -3,24 +3,30 @@ import { Navigate } from 'react-router-dom';
 import { responderMockCases } from '../../data/responderMockCases';
 import { getSession, RESPONDER_ROLES, ROLE_LABELS } from '../../utils/adminAuth';
 import ResponderTaskCard from '../../components/admin/ResponderTaskCard';
+import CaseDetailPanel from '../../components/admin/CaseDetailPanel';
 
 export default function ResponderScreen() {
   const session = getSession();
   const [tasks, setTasks] = useState(responderMockCases);
+  const [selected, setSelected] = useState(null);
 
   if (!session) return <Navigate to="/admin/login" replace />;
   if (!RESPONDER_ROLES.includes(session.role)) {
     return <Navigate to="/admin/login" replace />;
   }
 
-  const filtered = tasks.filter((t) => t.responder_type === session.role);
+  const filtered = tasks.filter((t) => t.role === session.role);
   const pending = filtered.filter((t) => !t.actioned).length;
 
-  const handleMarkActioned = (caseId) => {
+  const handleMarkActioned = (caseData) => {
+    const caseId = caseData.case_id ?? caseData.id;
     setTasks((prev) =>
       prev.map((t) =>
-        t.case_id === caseId && t.responder_type === session.role ? { ...t, actioned: true } : t
+        t.case_id === caseId && t.role === session.role ? { ...t, actioned: true } : t
       )
+    );
+    setSelected((cur) =>
+      cur && (cur.case_id ?? cur.id) === caseId ? { ...cur, actioned: true } : cur
     );
   };
 
@@ -41,7 +47,7 @@ export default function ResponderScreen() {
           {ROLE_LABELS[session.role]} — Assigned Cases
         </h2>
         <p style={{ margin: 0, fontSize: 13, color: '#475569' }} aria-live="polite">
-          Showing only cases assigned to your responder role · {pending} pending · {filtered.length} total
+          Open a case file to review SVI, AI flags, and checklist — then mark actioned · {pending} pending · {filtered.length} total
         </p>
       </div>
 
@@ -52,14 +58,20 @@ export default function ResponderScreen() {
       ) : (
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 16 }} aria-label="Assigned responder tasks">
           {filtered.map((task) => (
-            <li key={`${task.case_id}-${task.responder_type}`}>
-              <ResponderTaskCard
-                task={task}
-                onMarkActioned={handleMarkActioned}
-              />
+            <li key={`${task.case_id}-${task.role}`}>
+              <ResponderTaskCard task={task} onOpenCase={setSelected} />
             </li>
           ))}
         </ul>
+      )}
+
+      {selected && (
+        <CaseDetailPanel
+          caseData={selected}
+          mode="responder"
+          onClose={() => setSelected(null)}
+          onMarkActioned={handleMarkActioned}
+        />
       )}
     </div>
   );
