@@ -61,6 +61,11 @@ export default function ResponderTaskCard({ task, onOpenCase }) {
         {task.status && (
           <span style={metaChip}>Status: {task.status.replace(/_/g, ' ')}</span>
         )}
+        {task.current_level != null && task.current_level !== '' && (
+          <span style={{ ...metaChip, background: '#DBEAFE', color: '#1E3A8A', borderColor: '#93C5FD' }}>
+            Level: {String(task.current_level).replace(/_/g, ' ')}
+          </span>
+        )}
         {task.actioned ? (
           <span style={{ ...metaChip, background: '#D1FAE5', color: '#065F46', borderColor: '#6EE7B7' }}>Actioned</span>
         ) : (

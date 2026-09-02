@@ -258,10 +258,17 @@ consistency check (USP 3).
 Uses same `CaseOut` fields as Section 1, plus for detail panel:
 - `explanation_text` (string)
 - `recommended_action` (string)
-- `flags` (JSON object)
+- `flags` (JSON object — **nested** `{ present, confidence, signals[] }`, not flat booleans)
+- `status` + `current_level` (display together; e.g. `status=escalated` + `current_level=district` — there is no separate “pending district approval” status)
 - `notifications[]`: `{ recipient_role, channel, sent_at, status }`
 
-### Operator — Critical confirm (`POST /api/decisions/confirm` — Aditya)
+### Operator — Allowed actions (Aatmman engine)
+
+- `GET /api/cases/{id}/allowed-actions` → `{ "allowed_actions": ["escalate_to_district", "dispatch_police", ...] }`
+- `POST /api/cases/{id}/action` body `{ "action": "escalate_to_district", "notes": "..." }`
+- UI must render/submit the **exact** action strings (never a generic `"escalate"`).
+
+### Operator — Critical confirm (`POST /api/cases/{id}/officer-decision` — Pushp)
 
 ```json
 { "case_id": 1001, "action": "confirm_critical_dispatch", "officer_id": "..." }

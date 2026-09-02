@@ -110,7 +110,8 @@ body {
   position: absolute;
   top: 100%;
   left: 50%;
-  transform: translateX(-50%);
+  /* Nudge panel further right so it aligns under the nav bar content */
+  transform: translateX(calc(-50% + 140px));
   width: 1100px;
   background: #FAFAFA;
   border: 1px solid #E2E8F0;

@@ -53,13 +53,27 @@ export function getSession() {
   }
 }
 
+/**
+ * Persist officer session. Prefer including `token` from POST /auth/login
+ * so subsequent API calls can send Authorization: Bearer.
+ */
 export function setSession(user) {
-  // Persist role so Responder can filter assigned cases by session.role
   localStorage.setItem(SESSION_KEY, JSON.stringify(user));
 }
 
 export function clearSession() {
   localStorage.removeItem(SESSION_KEY);
+}
+
+export function getToken() {
+  return getSession()?.token || null;
+}
+
+/** Headers for authenticated admin API calls (empty object if no token). */
+export function getAuthHeaders() {
+  const token = getToken();
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
 }
 
 export function getRedirectForRole(role) {

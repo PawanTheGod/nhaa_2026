@@ -16,6 +16,7 @@ export const responderMockCases = [
     district: 'Central Delhi',
     state: 'Delhi',
     status: 'escalated',
+    current_level: 'district',
     is_silent_signal: true,
     incident_description: 'Ongoing intimidation; silent distress signal active.',
     explanation_text: 'Critical SVI: high pitch variability, fear markers, suicidal ideation and intimidation detected. Immediate police intervention recommended.',

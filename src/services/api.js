@@ -1,32 +1,57 @@
 /**
  * API client for NHAA Central Case API.
  *
- * Connects to the FastAPI backend running at VITE_API_URL (default http://localhost:8000).
- * Falls back gracefully when the API is not reachable so the admin panels still render
- * with mock data during development.
+ * Connects to the FastAPI backend at VITE_API_URL (default http://localhost:8000).
+ * Admin routes require Authorization: Bearer <JWT> from POST /auth/login.
  */
+
+import { getAuthHeaders, clearSession } from '../utils/adminAuth';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const API_BASE = `${BASE_URL}/api`;
 
 async function request(path, options = {}) {
-  const url = `${API_BASE}${path}`;
+  const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
   const opts = {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
     ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+      ...options.headers,
+    },
   };
   const resp = await fetch(url, opts);
+  if (resp.status === 401) {
+    // Token expired / invalid — clear so LoginScreen can take over
+    clearSession();
+  }
   if (!resp.ok) {
     const err = await resp.text().catch(() => '');
     throw new Error(`API ${resp.status}: ${err || resp.statusText}`);
+  }
+  if (resp.status === 204) return null;
+  return resp.json();
+}
+
+/**
+ * POST /auth/login — live Supabase-backed officer auth.
+ * Accepts JSON { username, password }; returns token + role claims.
+ */
+export async function loginOfficer(username, password) {
+  const resp = await fetch(`${BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!resp.ok) {
+    const err = await resp.text().catch(() => '');
+    throw new Error(err || `Login failed (${resp.status})`);
   }
   return resp.json();
 }
 
 /**
  * POST /cases — create a case from any channel.
- * @param {object} caseData  { channel_of_origin, district, state, incident_description, ... }
- * @param {object} opts      { role, district, state } for audit
  */
 export async function createCase(caseData, opts = {}) {
   const params = new URLSearchParams(opts).toString();
@@ -35,19 +60,61 @@ export async function createCase(caseData, opts = {}) {
 }
 
 /**
- * GET /cases — list cases, filterable by role/district/state.
- * @param {object} params { role, district, state, status, risk_tier, limit, offset }
+ * GET /api/cases — JWT-scoped list (Aditya admin_panel).
+ * @param {object} params { status, risk_tier, district, state, limit, offset }
  */
 export async function listCases(params = {}) {
-  const qs = new URLSearchParams(params).toString();
-  return request(`/cases/?${qs}`);
+  const cleaned = Object.fromEntries(
+    Object.entries(params).filter(([, v]) => v != null && v !== '')
+  );
+  const qs = new URLSearchParams(cleaned).toString();
+  return request(`/cases${qs ? `?${qs}` : ''}`);
 }
 
 /**
- * GET /cases/{id} — full case detail including risk assessments.
+ * GET /api/cases/{id} — case detail.
  */
 export async function getCase(caseId) {
   return request(`/cases/${caseId}`);
+}
+
+/**
+ * GET /api/cases/{id}/full — case + history timeline.
+ */
+export async function getFullCase(caseId) {
+  return request(`/cases/${caseId}/full`);
+}
+
+/**
+ * GET /api/cases/{id}/allowed-actions → { allowed_actions: string[] }
+ */
+export async function getAllowedActions(caseId) {
+  return request(`/cases/${caseId}/allowed-actions`);
+}
+
+/**
+ * POST /api/cases/{id}/action — submit engine action string
+ * e.g. escalate_to_district, assign_operator, dispatch_police, resolve
+ */
+export async function postCaseAction(caseId, action, notes) {
+  return request(`/cases/${caseId}/action`, {
+    method: 'POST',
+    body: JSON.stringify({ action, notes: notes || undefined }),
+  });
+}
+
+/**
+ * PATCH /api/decisions/{id}/actioned — responder mark actioned
+ */
+export async function markCaseActioned(caseId, payload = {}) {
+  return request(`/decisions/${caseId}/actioned`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      actioned: true,
+      responder_type: payload.responder_type,
+      notes: payload.notes,
+    }),
+  });
 }
 
 /**
@@ -56,7 +123,7 @@ export async function getCase(caseId) {
 export async function updateCase(caseId, patchData, opts = {}) {
   const params = new URLSearchParams(opts).toString();
   const qs = params ? `?${params}` : '';
-  return request(`/cases/${caseId}?${qs}`, {
+  return request(`/cases/${caseId}${qs}`, {
     method: 'PATCH',
     body: JSON.stringify(patchData),
   });
@@ -80,18 +147,14 @@ export async function getRiskAssessments(caseId) {
 }
 
 /**
- * GET /cases/{id}/notifications — dispatch log for a case (pending + sent).
- * Used by CaseDetailPanel / NotificationLog to show real notification rows.
+ * GET /cases/{id}/notifications — dispatch log for a case.
  */
 export async function getCaseNotifications(caseId) {
   return request(`/cases/${caseId}/notifications`);
 }
 
 /**
- * POST /cases/{id}/officer-decision — the human-confirmation gate.
- * This is the ONLY call that dispatches a Critical-tier notification.
- * @param {number} caseId
- * @param {string} confirmedBy  officer identifier/name
+ * POST /cases/{id}/officer-decision — Critical-tier notification gate (Pushp).
  */
 export async function confirmOfficerDecision(caseId, confirmedBy) {
   return request(`/cases/${caseId}/officer-decision`, {
@@ -104,7 +167,7 @@ export async function confirmOfficerDecision(caseId, confirmedBy) {
  * WebSocket connection to /ws for real-time updates.
  */
 export function connectWebSocket(onMessage) {
-  const wsUrl = (BASE_URL.replace(/^http/, 'ws')) + '/ws';
+  const wsUrl = `${BASE_URL.replace(/^http/, 'ws')}/ws`;
   const ws = new WebSocket(wsUrl);
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
@@ -117,7 +180,6 @@ export function connectWebSocket(onMessage) {
 
 /**
  * Fetch a single channel's cases from the API, with a simulated channel delay.
- * Used by the synchronization test on the frontend side.
  */
 export async function simulateChannelCase(channel, district, state, description) {
   return createCase(
@@ -133,32 +195,61 @@ export async function simulateChannelCase(channel, district, state, description)
 }
 
 /**
- * GET /stats/cases — aggregate statistics for admin dashboards.
+ * SIH presentation helper: create labelled [DEMO] cases with nested flags,
+ * then escalate one to district so judges see status + current_level.
  */
+export async function restoreDemoData() {
+  const { DEMO_CASES, DEMO_DISTRICT, DEMO_STATE } = await import('../data/demoPresentationCases');
+  const created = [];
+
+  for (const demo of DEMO_CASES) {
+    const { ra, escalate_to: escalateTo, ...caseFields } = demo;
+    const caseRow = await createCase(caseFields, {
+      role: 'operator',
+      district: DEMO_DISTRICT,
+      state: DEMO_STATE,
+    });
+    const caseId = caseRow.id ?? caseRow.case_id;
+    await createRiskAssessment(
+      {
+        case_id: caseId,
+        svi_score: ra.svi_score,
+        risk_tier: ra.risk_tier,
+        flags: ra.flags,
+        explanation_text: ra.explanation_text,
+        model_version: ra.model_version,
+        recommended_action: ra.recommended_action,
+      },
+      'demo_seed'
+    );
+    if (escalateTo) {
+      try {
+        await postCaseAction(caseId, escalateTo, 'SIH demo seed');
+      } catch {
+        // Escalate needs JWT; continue so other cases still load
+      }
+    }
+    created.push(caseId);
+  }
+
+  return { count: created.length, caseIds: created };
+}
+
 export async function getCaseStats(params = {}) {
   const qs = new URLSearchParams(params).toString();
   return request(`/stats/cases?${qs}`);
 }
 
-/**
- * GET /stats/trend — weekly trend of case volume and avg SVI.
- */
 export async function getCaseTrend(params = {}) {
   const qs = new URLSearchParams(params).toString();
   return request(`/stats/trend?${qs}`);
 }
 
-/**
- * GET /stats/districts — district-level comparison table.
- */
 export async function getDistrictComparison(params = {}) {
   const qs = new URLSearchParams(params).toString();
   return request(`/stats/districts?${qs}`);
 }
 
-/**
- * GET /stats/states — state-by-state comparison for the Ministry dashboard.
- */
 export async function getStateComparison() {
   return request('/stats/states');
 }
