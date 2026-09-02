@@ -295,24 +295,24 @@ async def get_allowed_actions(
 
     enforce_scope(case, officer)
 
-    actions = []
-    
+    from app.services.agent.decision_engine import get_allowed_actions as engine_allowed, check_authority
+    from app.models import OfficerRole
+
+    current_lvl_enum = None
+    if case.current_level:
+        try:
+            current_lvl_enum = OfficerRole(case.current_level)
+        except ValueError:
+            pass
+
+    officer_enum = OfficerRole(officer.role)
+    actions = engine_allowed(case.status, current_lvl_enum)
+    allowed = [a for a in actions if check_authority(officer_enum, a, case.status, current_lvl_enum)]
+
     if officer.role in RESPONDER_ROLES:
-        return {"allowed_actions": ["mark_actioned"]}
+        allowed.append("mark_actioned")
 
-    if case.status == CaseStatus.closed or case.status == CaseStatus.resolved:
-        return {"allowed_actions": []}
-    
-    if case.status == CaseStatus.new or case.status == CaseStatus.in_progress:
-        actions.extend(["escalate", "resolve"])
-    elif case.status == CaseStatus.escalated:
-        current_lvl = case.current_level or "police"
-        if current_lvl == officer.role:
-            actions.extend(["escalate", "resolve"])
-        elif officer.role == "ministry" and current_lvl == "ministry":
-            actions.extend(["resolve"])
-
-    return {"allowed_actions": actions}
+    return {"allowed_actions": allowed}
 
 
 class CaseActionIn(BaseModel):
@@ -353,15 +353,26 @@ async def process_case_action(
     
     if action == "resolve":
         case.status = CaseStatus.resolved
-    elif action == "escalate":
-        case.status = CaseStatus.escalated
-        hierarchy = ["operator", "police", "district", "state", "ministry"]
-        current_lvl = case.current_level or ("police" if officer.role == "operator" else officer.role)
-        current_idx = hierarchy.index(current_lvl) if current_lvl in hierarchy else 0
-        if current_idx < len(hierarchy) - 1:
-            case.current_level = hierarchy[current_idx + 1]
     elif action == "close":
         case.status = CaseStatus.closed
+    elif action == "reopen":
+        case.status = CaseStatus.new
+        case.current_level = None
+    elif action == "escalate_to_district":
+        case.status = CaseStatus.escalated
+        case.current_level = "district"
+    elif action == "escalate_to_state":
+        case.status = CaseStatus.escalated
+        case.current_level = "state"
+    elif action == "escalate_to_ministry":
+        case.status = CaseStatus.escalated
+        case.current_level = "ministry"
+    elif action == "assign_operator":
+        case.status = CaseStatus.in_progress
+        case.current_level = "operator"
+    elif action in ["dispatch_police", "dispatch_dlsa", "direct_intervention", "ai_triage"]:
+        # Actions that don't strictly change status/level right now
+        pass
     else:
         raise HTTPException(status_code=400, detail="Invalid action")
 
