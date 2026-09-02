@@ -1,0 +1,6 @@
+class,precision,recall,f1_score,support
+angry,0.0,0.0,0.0,3
+fearful,1.0,0.3333,0.5,3
+happy,0.0,0.0,0.0,3
+neutral,0.2143,1.0,0.3529,3
+sad,0.0,0.0,0.0,3

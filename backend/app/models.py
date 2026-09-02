@@ -84,7 +84,7 @@ class Cases(Base):
     assigned_officer_id = Column(BigInt, ForeignKey("officers.id"), nullable=True)
 
     # Computed / AI-filled fields
-    svi_score = Column(Numeric(4, 2), nullable=True)
+    svi_score = Column(Numeric(5, 2), nullable=True)
     risk_tier = Column(Enum(RiskTier, name="risk_tier"), nullable=True)
     recommended_action = Column(String(100), nullable=True)
 
@@ -128,7 +128,7 @@ class RiskAssessments(Base):
 
     id = Column(BigInt, primary_key=True, autoincrement=True)
     case_id = Column(BigInt, ForeignKey("cases.id"), nullable=False)
-    svi_score = Column(Numeric(4, 2), nullable=False)
+    svi_score = Column(Numeric(5, 2), nullable=False)
     risk_tier = Column(Enum(RiskTier, name="risk_tier"), nullable=False)
     flags = Column(JSON, nullable=True, comment="Arbitrary JSON of detected flags e.g. {trauma, fear, suicidal_ideation}")
     explanation_text = Column(Text, nullable=False)
