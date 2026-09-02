@@ -80,6 +80,27 @@ export async function getRiskAssessments(caseId) {
 }
 
 /**
+ * GET /cases/{id}/notifications — dispatch log for a case (pending + sent).
+ * Used by CaseDetailPanel / NotificationLog to show real notification rows.
+ */
+export async function getCaseNotifications(caseId) {
+  return request(`/cases/${caseId}/notifications`);
+}
+
+/**
+ * POST /cases/{id}/officer-decision — the human-confirmation gate.
+ * This is the ONLY call that dispatches a Critical-tier notification.
+ * @param {number} caseId
+ * @param {string} confirmedBy  officer identifier/name
+ */
+export async function confirmOfficerDecision(caseId, confirmedBy) {
+  return request(`/cases/${caseId}/officer-decision`, {
+    method: 'POST',
+    body: JSON.stringify({ confirmed_by: confirmedBy }),
+  });
+}
+
+/**
  * WebSocket connection to /ws for real-time updates.
  */
 export function connectWebSocket(onMessage) {
