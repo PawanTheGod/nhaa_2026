@@ -39,7 +39,7 @@ Vinit Case API  (backend/, port 8000)
 Vedika Perception  (perception-service/, port 8001)
         |
         v
-Aatmman Agent  (NOT BUILT — next work: backend/app/services/agent/)
+Aatmman Agent  (backend/app/services/agent/ + routes/agent.py)
         |
         v
 POST /api/risk-assessments/  -->  Pushp process_risk_assessment()
@@ -69,7 +69,7 @@ Frontend hash routes (Vite base `/nhaa_2026/`): `http://localhost:5173/nhaa_2026
 | Pushp | Notification/dispatch + Critical confirm gate | Overlaid into `backend/` only |
 | Vedika | STT / SER / text distress / SVI fusion | Cloned into `perception-service/` |
 | Aditya | JWT auth + admin API wrappers | **Missing.** Screens use mock login (`demo123`) |
-| Aatmman | Agentic decision engine | **Missing.** Next task after this merge |
+| Aatmman | Agentic decision engine | **Done.** `backend/app/services/agent/` — 35/35 tests pass. Branch: `aatmman-agent` on fork `aatmman/nhaa_2026` |
 
 Pawan demo logins (password `demo123`): `operator`, `police`, `dlsa`, `medical`, `counselor`, `witness`, `district`, `state`, `ministry`
 
@@ -97,7 +97,8 @@ nhaa-unified/
     app/routes/websocket.py
     app/routes/audit.py
     app/services/notifications.py    # tier mapping + Critical gate
-    app/services/agent/              # CREATE THIS for Aatmman (does not exist yet)
+    app/services/agent/              # Aatmman: decision_engine, openrouter, consistency, sla
+    app/routes/agent.py              # POST /api/agent/process, GET /api/agent/sla-predictor, POST /api/agent/consistency-check
     docs/data_contract.md
     docs/pushp_notification_service.md
     tests/test_sync.py
@@ -109,6 +110,13 @@ nhaa-unified/
     tests/                           # 73 unittest tests
   brain.md                           # copy of this file
 ```
+
+Agent endpoints:
+
+- `POST /api/agent/process` — takes `{svi_score, flags[]}`, returns `{risk_tier, recommended_actions, explanation}`
+- `GET  /api/agent/sla-predictor` — returns open cases sorted by SLA breach risk
+- `POST /api/agent/consistency-check` — compares `{ai_tier, officer_tier}`, returns `{mismatch, requires_supervisor_review}`
+- `POST /api/risk-assessments/from-perception` — full Vedika→Aatmman→Pushp pipeline (primary AI entry point)
 
 Admin routes in `src/App.jsx`:
 
@@ -218,17 +226,14 @@ Git remote of `nhaa-unified` is still Vinit’s repo. Do not push unless the tea
 
 ## 7. What is NOT built yet
 
-- Aatmman agent: risk-tier constants (may refine Vedika’s), recommended actions, OpenRouter explanation, structural Critical gate, silent distress handler, officer consistency check, SLA-breach predictor endpoint, tests
 - Aditya JWT + real login
-- Pushp 4-channel live E2E against real AI
+- Pushp 4-channel live E2E against real AI (needs `OPENROUTER_API_KEY` in `.env`)
 - Pawan Step 12 (swap mocks for real auth)
 - Continuity-of-care memory and 48–72h follow-up USP
 
-Aatmman implementation home (when we start):
+**Aatmman module is COMPLETE.** See `backend/app/services/agent/` and `backend/tests/test_agent.py`.
 
-`nhaa-unified/backend/app/services/agent/` plus FastAPI routes and `backend/tests/test_agent.py`
-
-Input shape from Aatmman brief:
+Input shape (for reference — consumed by `POST /api/risk-assessments/from-perception`):
 
 ```json
 {
@@ -281,7 +286,7 @@ cd nhaa-unified/perception-service && python -m unittest discover tests
 
 ## 9. Changelog (append-only)
 
-### 2026-09-02 — Unify sleeve (this session)
+### 2026-09-02 — Unify sleeve (Session 1)
 
 - Created `nhaa-unified` from TheVinit/nhaa_2026 (Vinit Case API + Pawan admin screens already on main).
 - Overlaid Pushp notification service and hooked it after `POST /api/risk-assessments/`.
@@ -289,4 +294,21 @@ cd nhaa-unified/perception-service && python -m unittest discover tests
 - Bumped `svi_score` to `Numeric(5,2)` in models + Alembic + data_contract.
 - Sanitized `nhaa-unified/.env.example` (removed committed credentials; use local `.env`).
 - Wrote this `brain.md` at workspace root and copied into `nhaa-unified/brain.md`.
-- Did **not** implement Aatmman agent yet. Next conversation: start from `aatmman.md` inside `nhaa-unified`.
+
+### 2026-09-02 — Aatmman Agent Engine (Session 2)
+
+- Forked `TheVinit/nhaa_2026` → `aatmman/nhaa_2026`. Added remote `fork`.
+- Rebased local `nhaa-unified` onto latest `origin/main` (commit `48e3361`), resolved one merge conflict in `risk_assessments.py`.
+- Committed Vedika perception-service overlay + local env tweaks on branch `aatmman-agent`.
+- **Built Aatmman's agentic decision engine** (all 9 steps from `aatmman.md`):
+  - `decision_engine.py` — inspectable rule-based tier mapping + forced flag overrides + action recommendations.
+  - `openrouter.py` — async OpenRouter client (Llama-3-8b-instruct:free), strict system prompt, graceful fallback.
+  - `consistency.py` — AI vs Officer tier mismatch detection (>1 level → supervisor flag).
+  - `sla.py` — rule-based SLA-breach predictor returning `LOW/MEDIUM/HIGH/BREACHED` sorted by urgency.
+  - `routes/agent.py` — 3 new FastAPI endpoints (`/process`, `/sla-predictor`, `/consistency-check`).
+  - `routes/risk_assessments.py` — new `POST /from-perception` full-pipeline entry point (Vedika→Aatmman→Pushp). Silent Distress Signal injected transparently (no visible transcript modification).
+  - `backend/app/main.py` — registered `agent_router`.
+  - `backend/tests/test_agent.py` — **35 tests, all passing**.
+- Pushed `aatmman-agent` branch to `https://github.com/aatmman/nhaa_2026`.
+- PR link: `https://github.com/aatmman/nhaa_2026/pull/new/aatmman-agent`
+- **Pending**: add `OPENROUTER_API_KEY=<your-key>` to `nhaa-unified/backend/.env` for live explanations.

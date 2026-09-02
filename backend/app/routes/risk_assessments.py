@@ -106,7 +106,9 @@ async def create_risk_assessment_from_perception(
     is set on the case, it forces the tier to Critical without exposing anything
     in the visible transcript.
     """
-    from app.services.agent.decision_engine import determine_risk_tier, recommend_actions
+    from app.services.agent.decision_engine import (
+        determine_risk_tier, recommend_actions, build_flags_db_object, build_routing_reason
+    )
     from app.services.agent.openrouter import generate_explanation
 
     # Extract fields from Vedika's PerceptionOutputContract
@@ -146,9 +148,21 @@ async def create_risk_assessment_from_perception(
     # Step 3: Generate specific plain-language explanation via OpenRouter
     explanation = await generate_explanation(svi_score, final_tier.value, actions, flags)
 
-    # Step 4: Build flags dict for DB storage (Vinit schema: {flag_name: confidence, ...})
-    flags_for_db = {f.get("name"): f.get("confidence") for f in flags if f.get("name")}
+    # Step 4: Build nested-object flags for DB storage (FINAL agreed shape with Vedika/Vinit/Pawan/Pushp):
+    #   { flag_name: { "present": true, "confidence": 0.82, "signals": [...] } }
+    # See decision_engine.build_flags_db_object() for the full contract.
+    flags_for_db = build_flags_db_object(flags)
+    # Always include recommended_action as required by Vinit's Case API schema
     flags_for_db["recommended_action"] = ", ".join(actions)
+
+    # Step 5: Build routing reason using real (status, current_level) fields
+    routing_reason = build_routing_reason(
+        risk_tier=final_tier,
+        actions=actions,
+        status=case.status,
+        current_level=case.risk_tier,  # current escalation level if any
+        flags=flags,
+    )
 
     # --- Persist enriched RiskAssessment ---
     ra = RiskAssessments(
