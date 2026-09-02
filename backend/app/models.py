@@ -88,6 +88,7 @@ class Cases(Base):
     svi_score = Column(Numeric(5, 2), nullable=True)
     risk_tier = Column(Enum(RiskTier, name="risk_tier"), nullable=True)
     recommended_action = Column(String(100), nullable=True)
+    current_level = Column(Integer, nullable=True, default=0, comment="Escalation level: 0=operator, 1=district, 2=state, 3=ministry")
 
     victim = relationship("Victims", back_populates="cases")
     assigned_officer = relationship("Officers", back_populates="cases")

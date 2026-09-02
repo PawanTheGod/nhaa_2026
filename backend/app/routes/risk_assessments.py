@@ -33,13 +33,23 @@ async def create_risk_assessment(
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
-    ra = RiskAssessments(**ra_data.model_dump(exclude_unset=True))
+    # `recommended_action` and `current_level` are case-level fields, not on the
+    # risk_assessments table — they update the case row, not the assessment row.
+    ra_data_dict = ra_data.model_dump(exclude_unset=True)
+    case_update_fields = {}
+    for f in ("recommended_action", "current_level"):
+        if f in ra_data_dict:
+            case_update_fields[f] = ra_data_dict.pop(f)
+
+    ra = RiskAssessments(**ra_data_dict)
     db.add(ra)
 
     case.svi_score = ra.svi_score
     case.risk_tier = ra.risk_tier
-    if ra.flags and "recommended_action" in ra.flags:
-        case.recommended_action = ra.flags["recommended_action"]
+    if "recommended_action" in case_update_fields:
+        case.recommended_action = case_update_fields["recommended_action"]
+    if "current_level" in case_update_fields:
+        case.current_level = case_update_fields["current_level"]
 
     await db.commit()
     await db.refresh(ra)
@@ -67,6 +77,8 @@ async def create_risk_assessment(
                 "risk_tier": ra.risk_tier.value,
                 "explanation_text": ra.explanation_text,
                 "created_at": ra.created_at.isoformat(),
+                "recommended_action": case.recommended_action,
+                "current_level": case.current_level,
             },
             "timestamp": case.updated_at.isoformat() if case.updated_at else None,
         })

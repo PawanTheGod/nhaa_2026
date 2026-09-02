@@ -18,16 +18,28 @@ def _serialize(value: Any) -> Any:
     return value
 
 
+class RiskFlagDetail(BaseModel):
+    """Nested flag shape from Aatmman's AI engine.
+    Each detected flag has a `present` boolean, `confidence` float, and `signals` list.
+    """
+    present: bool
+    confidence: float = Field(..., ge=0, le=1)
+    signals: list[str] = []
+
+
 class RiskAssessmentBase(BaseModel):
     svi_score: float = Field(..., ge=0, le=100)
     risk_tier: RiskTier
-    flags: Optional[dict[str, Any]] = None
+    flags: Optional[dict[str, RiskFlagDetail]] = None
     explanation_text: str
     model_version: Optional[str] = None
 
 
 class RiskAssessmentCreate(RiskAssessmentBase):
     case_id: int
+    # Aatmman's AI engine also passes back these case-level fields in the same payload
+    recommended_action: Optional[str] = None
+    current_level: Optional[int] = Field(default=None, ge=0, le=3)
 
 
 class RiskAssessmentOut(RiskAssessmentBase):
@@ -85,6 +97,7 @@ class CaseOut(CaseBase):
     svi_score: Optional[float] = None
     risk_tier: Optional[RiskTier] = None
     recommended_action: Optional[str] = None
+    current_level: Optional[int] = None
     risk_assessments: list[RiskAssessmentMini] = []
 
 

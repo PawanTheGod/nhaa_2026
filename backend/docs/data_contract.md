@@ -45,7 +45,8 @@ both halves of the panel.
     "assigned_officer_id": null,
     "svi_score": 87.5,          // numeric(5,2) | null
     "risk_tier": "critical",    // enum: low | moderate | high | critical | null
-    "recommended_action": "police_intervention", // string | null
+    "recommended_action": "police_intervention", // string | null (always included by AI)
+    "current_level": 1,         // int: 0=operator, 1=district, 2=state, 3=ministry
     "risk_assessments": []       // array of RiskAssessmentMini (empty for list view)
   }
 ]
@@ -84,16 +85,22 @@ both halves of the panel.
   "flags": {
     "trauma": { "present": true, "confidence": 0.82, "signals": ["long pause: 4.2s"] },
     "fear": { "present": true, "confidence": 0.88, "signals": ["voice tremor"] },
-    "suicidal_ideation": { "present": true, "confidence": 0.76, "signals": ["keyword match"] },
+    "suicidal_ideation": { "present": false, "confidence": 0.05, "signals": [] },
     "intimidation": { "present": true, "confidence": 0.84, "signals": ["threat language"] },
     "isolation": { "present": false, "confidence": 0.12, "signals": [] }
   },
-  "explanation_text": "High pitch variability detected...",
+  "explanation_text": "High pitch variability detected; multiple trauma markers present...",
   "model_version": "nhs-emotion-v2.1"
 }
 ```
 
-> **Flags note:** Phase-2 nested shape from Aatmman/Vedika (`present`, `confidence`, `signals[]`). CaseDetailPanel also tolerates legacy flat booleans.
+**Flags shape (final — per Aatmman):**
+Each flag is a nested object with:
+- `present` (bool) — whether this flag was detected
+- `confidence` (float 0-1) — model confidence
+- `signals` (list of strings) — specific signals that triggered this flag
+
+NOT a flat boolean. The Case API stores the full nested object in `risk_assessments.flags` as JSON.
 
 ### Output JSON (RiskAssessmentOut)
 

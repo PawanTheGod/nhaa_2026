@@ -207,14 +207,20 @@ async def test_4_ai_risk_assessment_updates_case(client, ws_conn):
 
     ws_conn.clear()
 
-    # AI module posts a risk assessment
+    # AI module posts a risk assessment (using Aatmman's nested flag shape)
     ra_payload = {
         "case_id": case_id,
         "svi_score": 87.5,
         "risk_tier": "critical",
-        "flags": {"trauma": True, "suicidal_ideation": True, "intimidation": True},
+        "flags": {
+            "trauma": {"present": True, "confidence": 0.82, "signals": ["shaking_voice", "crying"]},
+            "suicidal_ideation": {"present": True, "confidence": 0.91, "signals": ["keywords:k*ll", "phrases:no_way_out"]},
+            "intimidation": {"present": True, "confidence": 0.76, "signals": ["long_pauses", "third_party_in_room"]},
+        },
         "explanation_text": "High pitch variability, long pauses, keywords: 'kill me', 'no way out' detected.",
         "model_version": "nhs-emotion-v2.1",
+        "recommended_action": "dispatch_police",
+        "current_level": 1,
     }
     resp = await client.post("/api/risk-assessments/", json=ra_payload, params={"actor": "ai_module"})
     assert resp.status_code == 201, f"Risk assessment POST failed: {resp.text}"
@@ -230,6 +236,9 @@ async def test_4_ai_risk_assessment_updates_case(client, ws_conn):
     assert detail["svi_score"] == 87.5
     assert detail["risk_tier"] == "critical"
     assert len(detail["risk_assessments"]) >= 1
+    # Verify current_level and recommended_action are stored on the case
+    assert detail["current_level"] == 1
+    assert detail["recommended_action"] == "dispatch_police"
 
     # WebSocket should have a risk_assessment_created event
     ra_events = [e for e in ws_conn if e["event"] == "risk_assessment_created"]
@@ -237,6 +246,7 @@ async def test_4_ai_risk_assessment_updates_case(client, ws_conn):
 
     print(f"\n[PASS] AI risk assessment linked to case {case_id}")
     print(f"       SVI: {ra['svi_score']}, Tier: {ra['risk_tier']}")
+    print(f"       Current Level: {detail['current_level']}, Action: {detail['recommended_action']}")
     print(f"       WS events: {[e['event'] for e in ws_conn]}")
 
 
@@ -303,12 +313,17 @@ async def test_7_end_to_end_full_pipeline(client):
     assert resp.status_code == 201
     case_id = resp.json()["id"]
 
-    # 2. AI module posts risk assessment
+    # 2. AI module posts risk assessment (nested flags shape)
     resp = await client.post("/api/risk-assessments/", json={
         "case_id": case_id,
         "svi_score": 95.0,
         "risk_tier": "critical",
-        "flags": {"trauma": True, "fear": True, "suicidal_ideation": True, "intimidation": True},
+        "flags": {
+            "trauma": {"present": True, "confidence": 0.88, "signals": ["crying"]},
+            "fear": {"present": True, "confidence": 0.92, "signals": ["rapid_speech"]},
+            "suicidal_ideation": {"present": True, "confidence": 0.95, "signals": ["explicit_phrases"]},
+            "intimidation": {"present": True, "confidence": 0.84, "signals": ["background_voice"]},
+        },
         "explanation_text": "Critical: high distress, explicit suicidal ideation, fear of retaliation.",
         "model_version": "nhs-emotion-v2.1",
     }, params={"actor": "ai_module"})
