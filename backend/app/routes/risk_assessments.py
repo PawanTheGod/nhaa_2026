@@ -7,6 +7,7 @@ from app.models import Cases, RiskAssessments
 from app.schemas import RiskAssessmentCreate, RiskAssessmentOut
 from app.routes.audit import log_action
 from app.routes.websocket import ws_manager
+from app.services.notifications import process_risk_assessment
 
 router = APIRouter(prefix="/risk-assessments", tags=["risk-assessments"])
 
@@ -68,6 +69,20 @@ async def create_risk_assessment(
                 "created_at": ra.created_at.isoformat(),
             },
             "timestamp": case.updated_at.isoformat() if case.updated_at else None,
+        })
+
+    # Pushp's notification/dispatch service: create Notifications rows for
+    # the correct recipients based on risk_tier. Idempotent by design.
+    created_notifs = await process_risk_assessment(db, ra.id)
+    if created_notifs and ws_manager is not None:
+        await ws_manager.broadcast({
+            "event": "notifications_created",
+            "data": {
+                "risk_assessment_id": ra.id,
+                "case_id": ra.case_id,
+                "count": len(created_notifs),
+                "recipients": [n.recipient_role.value for n in created_notifs],
+            },
         })
 
     return ra
