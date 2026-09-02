@@ -13,6 +13,7 @@ import NhaaOrganisationPage from './pages/organisation/NhaaOrganisationPage';
 import DistrictScreen from './pages/admin/DistrictScreen';
 import StateScreen from './pages/admin/StateScreen';
 import MinistryScreen from './pages/admin/MinistryScreen';
+import TopBar from './components/TopBar';
 import LoginScreen from './pages/admin/LoginScreen';
 import OperatorScreen from './pages/admin/OperatorScreen';
 import ResponderScreen from './pages/admin/ResponderScreen';
@@ -264,28 +265,6 @@ const FOOTER_LINKS = {
 };
 
 const BANNERS = [ASSETS.banner1, ASSETS.banner2, ASSETS.banner3, ASSETS.banner4, ASSETS.banner5];
-
-// ─── TOP BAR ───────────────────────────────────────────────
-function TopBar() {
-  return (
-    <div style={{ background: '#0073E6', color: '#fff', fontSize: 13, padding: '7px 0' }}>
-      <div style={{ maxWidth: 1380, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 500 }}>
-          <img src={ASSETS.indianFlag} alt="India" style={{ height: 16, width: 'auto' }} onError={e => e.target.style.display = 'none'} />
-          <span>Government of India</span>
-          <ExternalIcon />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, fontSize: 13, fontWeight: 500 }}>
-          <a href="#content" style={{ color: '#fff', textDecoration: 'none' }}>Skip to Main Content</a>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <AccessibilityIcon />
-            <span style={{ fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>अA</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ─── HEADER ────────────────────────────────────────────────
 function Header() {
