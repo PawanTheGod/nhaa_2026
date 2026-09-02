@@ -219,6 +219,8 @@ async def test_4_ai_risk_assessment_updates_case(client, ws_conn):
         },
         "explanation_text": "High pitch variability, long pauses, keywords: 'kill me', 'no way out' detected.",
         "model_version": "nhs-emotion-v2.1",
+        "recommended_action": "dispatch_police",
+        "current_level": 1,
     }
     resp = await client.post("/api/risk-assessments/", json=ra_payload, params={"actor": "ai_module"})
     assert resp.status_code == 201, f"Risk assessment POST failed: {resp.text}"
@@ -234,6 +236,9 @@ async def test_4_ai_risk_assessment_updates_case(client, ws_conn):
     assert detail["svi_score"] == 87.5
     assert detail["risk_tier"] == "critical"
     assert len(detail["risk_assessments"]) >= 1
+    # Verify current_level and recommended_action are stored on the case
+    assert detail["current_level"] == 1
+    assert detail["recommended_action"] == "dispatch_police"
 
     # WebSocket should have a risk_assessment_created event
     ra_events = [e for e in ws_conn if e["event"] == "risk_assessment_created"]
@@ -241,6 +246,7 @@ async def test_4_ai_risk_assessment_updates_case(client, ws_conn):
 
     print(f"\n[PASS] AI risk assessment linked to case {case_id}")
     print(f"       SVI: {ra['svi_score']}, Tier: {ra['risk_tier']}")
+    print(f"       Current Level: {detail['current_level']}, Action: {detail['recommended_action']}")
     print(f"       WS events: {[e['event'] for e in ws_conn]}")
 
 

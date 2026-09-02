@@ -37,6 +37,9 @@ class RiskAssessmentBase(BaseModel):
 
 class RiskAssessmentCreate(RiskAssessmentBase):
     case_id: int
+    # Aatmman's AI engine also passes back these case-level fields in the same payload
+    recommended_action: Optional[str] = None
+    current_level: Optional[int] = Field(default=None, ge=0, le=3)
 
 
 class RiskAssessmentOut(RiskAssessmentBase):
