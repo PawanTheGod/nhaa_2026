@@ -333,3 +333,154 @@ class TestCriticalDispatchGate:
                 assert RT.critical in TIERS_REQUIRING_CONFIRMATION, (
                     "Critical tier MUST be in TIERS_REQUIRING_CONFIRMATION"
                 )
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 9.  State Machine — real (status, current_level) pairs (v2)
+# ──────────────────────────────────────────────────────────────────────────────
+
+class TestStateMachine:
+    """Tests for get_allowed_actions() using Vinit's real CaseStatus + OfficerRole enums."""
+
+    def test_new_case_allows_ai_triage(self):
+        from app.services.agent.decision_engine import get_allowed_actions
+        from app.models import CaseStatus
+        actions = get_allowed_actions(CaseStatus.new, None)
+        assert "ai_triage" in actions
+
+    def test_escalated_district_allows_dispatch_police(self):
+        from app.services.agent.decision_engine import get_allowed_actions
+        from app.models import CaseStatus, OfficerRole
+        actions = get_allowed_actions(CaseStatus.escalated, OfficerRole.district)
+        assert "dispatch_police" in actions
+
+    def test_closed_case_allows_nothing(self):
+        from app.services.agent.decision_engine import get_allowed_actions
+        from app.models import CaseStatus
+        actions = get_allowed_actions(CaseStatus.closed, None)
+        assert actions == []
+
+    def test_no_invented_status_names(self):
+        """Verify we never use invented strings like 'pending_district_approval'."""
+        from app.services.agent.decision_engine import ALLOWED_ACTIONS_BY_STATE
+        from app.models import CaseStatus
+        real_statuses = {s.value for s in CaseStatus}
+        for (status, _) in ALLOWED_ACTIONS_BY_STATE.keys():
+            assert status.value in real_statuses, (
+                f"Invented status '{status}' found — must use Vinit's real enum"
+            )
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 10. Authority Matrix — 9-value OfficerRole enum (v2)
+# ──────────────────────────────────────────────────────────────────────────────
+
+class TestAuthorityMatrix:
+    def test_operator_can_escalate_to_district(self):
+        from app.services.agent.decision_engine import check_authority
+        from app.models import CaseStatus, OfficerRole
+        assert check_authority(
+            OfficerRole.operator, "escalate_to_district",
+            CaseStatus.in_progress, OfficerRole.operator
+        ) is True
+
+    def test_police_cannot_escalate(self):
+        from app.services.agent.decision_engine import check_authority
+        from app.models import CaseStatus, OfficerRole
+        assert check_authority(
+            OfficerRole.police, "escalate_to_state",
+            CaseStatus.escalated, OfficerRole.district
+        ) is False
+
+    def test_all_roles_use_real_enum(self):
+        """Ensure AUTHORITY_MATRIX has no role values outside the 9-value enum."""
+        from app.services.agent.decision_engine import AUTHORITY_MATRIX
+        from app.models import OfficerRole
+        real_roles = {r.value for r in OfficerRole}
+        for role in AUTHORITY_MATRIX.keys():
+            assert role.value in real_roles, (
+                f"Role '{role}' not in OfficerRole enum (no 'legalaid', no 'responderType')"
+            )
+
+    def test_dlsa_spelling(self):
+        """Ensure we use 'dlsa' not 'legalaid' and 'counselor' (one word)."""
+        from app.services.agent.decision_engine import AUTHORITY_MATRIX
+        from app.models import OfficerRole
+        assert OfficerRole.dlsa in AUTHORITY_MATRIX
+        assert OfficerRole.counselor in AUTHORITY_MATRIX
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 11. Nested-object Flags Shape (v2)
+# ──────────────────────────────────────────────────────────────────────────────
+
+class TestNestedFlagsShape:
+    def test_build_flags_db_object_structure(self):
+        """Final agreed shape: {name: {present, confidence, signals}}."""
+        from app.services.agent.decision_engine import build_flags_db_object
+        flags = [
+            {"name": "trauma", "confidence": 0.82, "signals": ["long pause: 4.2s"]},
+            {"name": "intimidation", "confidence": 0.75, "signals": ["threat keyword"]},
+        ]
+        result = build_flags_db_object(flags)
+        assert "trauma" in result
+        assert result["trauma"]["present"] is True
+        assert result["trauma"]["confidence"] == 0.82
+        assert result["trauma"]["signals"] == ["long pause: 4.2s"]
+
+    def test_recommended_action_always_included(self):
+        """recommended_action must always be present in flags_for_db."""
+        from app.services.agent.decision_engine import build_flags_db_object, recommend_actions
+        flags = [{"name": "fear", "confidence": 0.6, "signals": []}]
+        flags_db = build_flags_db_object(flags)
+        actions = recommend_actions(RiskTier.moderate, flags)
+        flags_db["recommended_action"] = ", ".join(actions)
+        assert "recommended_action" in flags_db
+        assert len(flags_db["recommended_action"]) > 0
+
+    def test_no_flat_booleans(self):
+        """The flags dict must NOT be flat booleans like {'trauma': True}."""
+        from app.services.agent.decision_engine import build_flags_db_object
+        flags = [{"name": "trauma", "confidence": 0.82, "signals": []}]
+        result = build_flags_db_object(flags)
+        # Value must be a dict, not a bool
+        assert isinstance(result["trauma"], dict), (
+            "flags must use nested-object shape, not flat booleans"
+        )
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 12. Routing Reason — uses real status/current_level (v2)
+# ──────────────────────────────────────────────────────────────────────────────
+
+class TestRoutingReason:
+    def test_routing_reason_uses_real_status(self):
+        """Routing reason must reference real status value, not invented names."""
+        from app.services.agent.decision_engine import build_routing_reason
+        from app.models import CaseStatus, OfficerRole
+        reason = build_routing_reason(
+            risk_tier=RiskTier.high,
+            actions=["police intervention"],
+            status=CaseStatus.escalated,
+            current_level=OfficerRole.district,
+            flags=[{"name": "intimidation", "confidence": 0.8, "signals": []}],
+        )
+        assert "escalated" in reason
+        assert "district" in reason
+        assert "intimidation" in reason
+        assert "high" in reason.lower()
+
+    def test_routing_reason_no_invented_names(self):
+        """Should never contain invented names like 'pending_district_approval'."""
+        from app.services.agent.decision_engine import build_routing_reason
+        from app.models import CaseStatus, OfficerRole
+        reason = build_routing_reason(
+            risk_tier=RiskTier.critical,
+            actions=["emergency support"],
+            status=CaseStatus.escalated,
+            current_level=OfficerRole.state,
+            flags=[],
+        )
+        assert "pending_district_approval" not in reason
+        assert "Pending District Approval" not in reason
+
