@@ -72,7 +72,8 @@ async def create_risk_assessment(
         })
 
     # Pushp's notification/dispatch service: create Notifications rows for
-    # the correct recipients based on risk_tier. Idempotent by design.
+    # the correct recipients based on risk_tier. Idempotent by design, so
+    # this is safe even if risk assessments are ever re-broadcast.
     created_notifs = await process_risk_assessment(db, ra.id)
     if created_notifs and ws_manager is not None:
         await ws_manager.broadcast({

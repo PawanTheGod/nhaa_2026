@@ -1,0 +1,36 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+
+# Model weights & huggingface/whisper caches
+*.pt
+*.bin
+*.onnx
+*.safetensors
+.cache/
+downloads/
+models/
+
+# Environment & IDE
+.env
+.venv
+env/
+venv/
+.vscode/
+.idea/
+
+# Nested external repositories
+vinit_repo/
+
+# Cache & build outputs
+temp_*
+.pytest_cache/
+.coverage
+__pycache__/
+*.py[cod]
+*$py.class
+

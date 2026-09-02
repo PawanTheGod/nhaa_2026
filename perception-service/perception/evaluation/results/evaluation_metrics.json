@@ -1,0 +1,102 @@
+{
+  "dataset_name": "RAVDESS",
+  "sample_count": 15,
+  "classes": [
+    "angry",
+    "fearful",
+    "happy",
+    "neutral",
+    "sad"
+  ],
+  "model_checkpoint": "mock",
+  "evaluation_mode": "Zero-shot Evaluation (Pretrained Weights)",
+  "preprocessing": "16kHz Mono PCM Audio Resampling & Peak Normalization",
+  "overall_accuracy": 0.2667,
+  "macro_metrics": {
+    "precision": 0.2429,
+    "recall": 0.2667,
+    "f1_score": 0.1706
+  },
+  "weighted_metrics": {
+    "precision": 0.2429,
+    "recall": 0.2667,
+    "f1_score": 0.1706
+  },
+  "per_class_metrics": {
+    "angry": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "support": 3
+    },
+    "fearful": {
+      "precision": 1.0,
+      "recall": 0.3333,
+      "f1_score": 0.5,
+      "support": 3
+    },
+    "happy": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "support": 3
+    },
+    "neutral": {
+      "precision": 0.2143,
+      "recall": 1.0,
+      "f1_score": 0.3529,
+      "support": 3
+    },
+    "sad": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "support": 3
+    }
+  },
+  "confusion_matrix": [
+    [
+      0,
+      0,
+      0,
+      3,
+      0
+    ],
+    [
+      0,
+      1,
+      0,
+      2,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      3,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      3,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      3,
+      0
+    ]
+  ],
+  "mean_inference_time_per_sample_sec": 0.7452,
+  "total_evaluation_time_sec": 11.74,
+  "artifacts_saved": {
+    "confusion_matrix_png": "perception/evaluation/results\\confusion_matrix.png",
+    "metrics_json": "perception/evaluation/results\\evaluation_metrics.json",
+    "per_class_csv": "perception/evaluation/results\\per_class_metrics.csv"
+  },
+  "disclaimer": "BENCHMARK EVALUATION NOTICE: Accuracy and F1 scores reported are measured on open benchmark datasets (RAVDESS / CREMA-D) under zero-shot evaluation conditions. DO NOT EQUATE BENCHMARK ACCURACY TO REAL-WORLD HELPLINE DEPLOYMENT ACCURACY OR CLINICAL VALIDITY. Noise, dialect variation, and high call stress in live government helpline calls introduce domain shifts."
+}
