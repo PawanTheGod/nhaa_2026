@@ -42,6 +42,15 @@ app.include_router(stats_router, prefix="/api")
 app.include_router(notifications_router, prefix="/api")
 app.include_router(ws_router)
 
+# Register Vedika's AI Perception Layer Routers
+try:
+    from api.routes.perception_routes import router as perception_router
+    from api.routes.analytics_routes import router as perception_analytics_router
+    app.include_router(perception_router)
+    app.include_router(perception_analytics_router)
+except Exception as p_err:
+    print(f"[NHAA App WARNING] Perception routers optional registration notice: {p_err}")
+
 
 @app.get("/health")
 async def health():

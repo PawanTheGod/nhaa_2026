@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "case_id": "CASE-14566-20260902-8821",
+  "timestamp": 1788288300.0,
+  "channel": "ivrs",
+  "language": {
+    "code": "hi",
+    "confidence": 0.95,
+    "tested_status": "TESTED (Hindi)"
+  },
+  "svi": {
+    "score": 68,
+    "risk_tier": "High"
+  },
+  "flags": [
+    {
+      "name": "intimidation",
+      "confidence": 0.85,
+      "signals": [
+        "Keyword match: 'मारने की धमकी' in text",
+        "vocal acoustic tone: angry/agitated (conf=0.78)"
+      ],
+      "source": [
+        "audio",
+        "text"
+      ]
+    },
+    {
+      "name": "fear",
+      "confidence": 0.75,
+      "signals": [
+        "pitch variation: high (std=43.3 Hz)",
+        "Keyword match: 'डर लग रहा' in text"
+      ],
+      "source": [
+        "audio",
+        "text"
+      ]
+    }
+  ],
+  "sources": {
+    "speech": true,
+    "text": true
+  },
+  "raw_measurements": [
+    {
+      "source": "audio",
+      "type": "acoustic_feature",
+      "name": "pause_duration",
+      "value": 4.2,
+      "unit": "seconds"
+    },
+    {
+      "source": "audio",
+      "type": "acoustic_feature",
+      "name": "pitch_std",
+      "value": 43.3,
+      "unit": "Hz"
+    },
+    {
+      "source": "text",
+      "type": "text_pattern",
+      "name": "intimidation_match_count",
+      "value": 2,
+      "unit": "matches"
+    }
+  ],
+  "model_predictions": [
+    {
+      "source": "audio",
+      "type": "model_prediction",
+      "name": "fearful",
+      "confidence": 0.78,
+      "model_name": "ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition"
+    },
+    {
+      "source": "text",
+      "type": "model_prediction",
+      "name": "intimidation",
+      "confidence": 0.85,
+      "model_name": "google/muril-base-cased"
+    }
+  ],
+  "model_metadata": {
+    "stt_model": "whisper-tiny",
+    "ser_model": "ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition",
+    "text_model": "google/muril-base-cased",
+    "execution_time_sec": 0.421
+  },
+  "safety_disclaimer": "PROTOTYPE PERCEPTION SIGNAL: The SVI score (0-100) and risk tiers represent an automated triage risk prioritization estimate. IT DOES NOT CONSTITUTE A CLINICAL DIAGNOSIS OR PSYCHOLOGICAL ASSESMENT. Final triage decisions and emergency responses must be evaluated by human helpline officers."
+}
