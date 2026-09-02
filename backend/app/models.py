@@ -70,6 +70,7 @@ class Cases(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
     status = Column(Enum(CaseStatus, name="case_status"), nullable=False, default=CaseStatus.new)
+    current_level = Column(String(50), nullable=True, comment="police, district, state, or ministry")
     district = Column(String(100), nullable=True)
     state = Column(String(100), nullable=True)
 
@@ -84,7 +85,7 @@ class Cases(Base):
     assigned_officer_id = Column(BigInt, ForeignKey("officers.id"), nullable=True)
 
     # Computed / AI-filled fields
-    svi_score = Column(Numeric(4, 2), nullable=True)
+    svi_score = Column(Numeric(5, 2), nullable=True)
     risk_tier = Column(Enum(RiskTier, name="risk_tier"), nullable=True)
     recommended_action = Column(String(100), nullable=True)
     current_level = Column(Integer, nullable=True, default=0, comment="Escalation level: 0=operator, 1=district, 2=state, 3=ministry")
@@ -129,7 +130,7 @@ class RiskAssessments(Base):
 
     id = Column(BigInt, primary_key=True, autoincrement=True)
     case_id = Column(BigInt, ForeignKey("cases.id"), nullable=False)
-    svi_score = Column(Numeric(4, 2), nullable=False)
+    svi_score = Column(Numeric(5, 2), nullable=False)
     risk_tier = Column(Enum(RiskTier, name="risk_tier"), nullable=False)
     flags = Column(JSON, nullable=True, comment="Arbitrary JSON of detected flags e.g. {trauma, fear, suicidal_ideation}")
     explanation_text = Column(Text, nullable=False)
@@ -148,6 +149,7 @@ class Officers(Base):
         Index("idx_officers_role", "role"),
         Index("idx_officers_district", "district"),
         Index("idx_officers_state", "state"),
+        Index("idx_officers_username", "username", unique=True),
     )
 
     id = Column(BigInt, primary_key=True, autoincrement=True)
@@ -158,6 +160,10 @@ class Officers(Base):
     badge_id = Column(String(50), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    # ── Auth credentials (added by Aditya — auth layer) ────────────────────
+    username = Column(String(100), nullable=True, unique=True)
+    password_hash = Column(String(255), nullable=True)
 
     cases = relationship("Cases", back_populates="assigned_officer")
 

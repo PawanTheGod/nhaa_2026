@@ -24,7 +24,7 @@ export default function RiskBadge({ tier = 'low', score }) {
       title={`Risk Tier: ${TIER_LABELS[tier]}${score != null ? ` | SVI: ${score}` : ''}`}
     >
       {TIER_LABELS[tier]}
-      {score != null && <span className="font-normal opacity-60">({score})</span>}
+      {score != null && <span style={{ fontWeight: 500, opacity: 1 }}>({score})</span>}
     </span>
   );
 }

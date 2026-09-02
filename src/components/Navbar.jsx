@@ -49,7 +49,7 @@ const navItems = [
           { code: 'SMILE', label: 'National Portal for Transgender Persons', href: '#' },
           { code: 'NOS', label: 'National Overseas Scholarship', href: '/schemes' },
           { code: 'NMBA', label: 'Nasha Mukt Bharat Abhiyaan', href: '/samavesh' },
-          { code: 'NHAA / SAMBAL', label: 'National Helpline Against Atrocities', href: '/nhaa' },
+          { code: 'NHAA / SAMBAL', label: 'National Helpline Against Atrocities', href: '/organisation/national-helpline-against-atrocities' },
         ],
       },
     ],
