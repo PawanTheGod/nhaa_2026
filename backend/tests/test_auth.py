@@ -145,6 +145,7 @@ async def setup_db():
             district="Central Delhi",
             state="Delhi",
             status=CaseStatus.in_progress,
+            current_level="operator",
             risk_tier=RiskTier.high,
             svi_score=78.5,
             recommended_action="immediate_police_response",
@@ -496,12 +497,12 @@ async def test_action_and_full_endpoints():
             headers={"Authorization": f"Bearer {op_token}"},
         )
         assert allowed.status_code == 200
-        assert "escalate" in allowed.json()["allowed_actions"]
+        assert "escalate_to_district" in allowed.json()["allowed_actions"]
 
         # Take escalate action
         action_res = await client.post(
             "/api/cases/101/action",
-            json={"action": "escalate", "notes": "Escalating case"},
+            json={"action": "escalate_to_district", "notes": "Escalating case"},
             headers={"Authorization": f"Bearer {op_token}"},
         )
         assert action_res.status_code == 200
@@ -515,5 +516,5 @@ async def test_action_and_full_endpoints():
         assert full_res.status_code == 200
         full_data = full_res.json()
         assert "history" in full_data
-        assert any(h["action"] == "case_action_escalate" for h in full_data["history"])
+        assert any(h["action"] == "case_action_escalate_to_district" for h in full_data["history"])
 
