@@ -33,6 +33,11 @@ backend/test_sync.db
 backend/alembic/versions/*.pyc
 .venv/
 
+# Perception service (Vedika)
+perception-service/.venv/
+perception-service/**/__pycache__/
+perception-service/**/*.pyc
+
 # Environment
 .env
 .env.local

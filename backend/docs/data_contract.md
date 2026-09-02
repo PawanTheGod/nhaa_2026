@@ -43,7 +43,7 @@ both halves of the panel.
     "is_silent_signal": false,
     "victim_id": null,
     "assigned_officer_id": null,
-    "svi_score": 87.5,          // numeric(4,2) | null
+    "svi_score": 87.5,          // numeric(5,2) | null
     "risk_tier": "critical",    // enum: low | moderate | high | critical | null
     "recommended_action": "police_intervention", // string | null
     "risk_assessments": []       // array of RiskAssessmentMini (empty for list view)
