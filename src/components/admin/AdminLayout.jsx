@@ -2,6 +2,8 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ASSETS } from '../../assets';
 import { getSession, clearSession, ROLE_LABELS } from '../../utils/adminAuth';
+import { useLang } from '../../i18n/LangContext';
+import { ADMIN_TRANSLATIONS } from '../../i18n/adminTranslations';
 
 const ADMIN_NAV = [
   { label: 'Operator', path: '/admin/operator', desc: 'Live case triage queue', roles: ['operator'] },
@@ -21,6 +23,8 @@ export default function AdminLayout({ children }) {
   const navigate = useNavigate();
   const session = getSession();
   const role = session?.role;
+  const { lang, t } = useLang();
+  const at = ADMIN_TRANSLATIONS[lang] || ADMIN_TRANSLATIONS.en;
   const current = ADMIN_NAV.find((n) => n.path === location.pathname);
 
   const handleLogout = () => {
@@ -34,7 +38,7 @@ export default function AdminLayout({ children }) {
         <div style={{ maxWidth: 1380, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 500 }}>
             <img src={ASSETS.indianFlag} alt="India" style={{ height: 14, width: 22, objectFit: 'cover', borderRadius: 2 }} onError={(e) => { e.target.style.display = 'none'; }} />
-            Government of India | Ministry of Social Justice &amp; Empowerment | NHAA 14566
+            Government of India | {at.dashboardSubtitle} | NHAA 14566
           </span>
           <Link to="/" style={{ color: '#fff', textDecoration: 'none', fontSize: 12, fontWeight: 500 }}>
             ← Public Portal

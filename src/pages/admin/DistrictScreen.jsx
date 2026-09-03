@@ -3,6 +3,8 @@ import { listCases, connectWebSocket } from '../../services/api';
 import { districtMockData } from '../../data/districtCases';
 import RiskBadge from '../../components/admin/RiskBadge';
 import SLACountdown from '../../components/admin/SLACountdown';
+import { useLang } from '../../i18n/LangContext';
+import { ADMIN_TRANSLATIONS } from '../../i18n/adminTranslations';
 
 const CHANNEL_LABELS = {
   portal: 'Portal',
@@ -33,6 +35,8 @@ export default function DistrictScreen() {
   const [cases, setCases] = useState([]);
   const [useMock, setUseMock] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
+  const { lang } = useLang();
+  const at = ADMIN_TRANSLATIONS[lang] || ADMIN_TRANSLATIONS.en;
 
   useEffect(() => {
     let ws;

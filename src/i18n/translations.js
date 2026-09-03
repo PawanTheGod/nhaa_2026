@@ -1,0 +1,81 @@
+/**
+ * Translation strings for the top bar + key UI elements.
+ * Covers: English, Hindi, Tamil, Telugu, Bengali, Marathi
+ */
+export const TRANSLATIONS = {
+  en: {
+    skipToMain: 'Skip to Main Content',
+    governmentOfIndia: 'Government of India',
+    indiaGovIn: 'India.gov.in',
+    aMinus: 'A-',
+    aNormal: 'A',
+    aPlus: 'A+',
+    highContrast: 'High Contrast',
+    selectLanguage: 'Select language',
+    adminPortal: 'Admin Portal',
+  },
+  hi: {
+    skipToMain: 'मुख्य सामग्री पर जाएं',
+    governmentOfIndia: 'भारत सरकार',
+    indiaGovIn: 'इंडिया.जीओवी.इन',
+    aMinus: 'क-',
+    aNormal: 'क',
+    aPlus: 'क+',
+    highContrast: 'उच्च कंट्रास्ट',
+    selectLanguage: 'भाषा चुनें',
+    adminPortal: 'एडमिन पोर्टल',
+  },
+  ta: {
+    skipToMain: 'முக்கிய உள்ளடக்கத்திற்கு செல்க',
+    governmentOfIndia: 'இந்திய அரசு',
+    indiaGovIn: 'இந்தியா.அரசு.இன்',
+    aMinus: 'அ-',
+    aNormal: 'அ',
+    aPlus: 'அ+',
+    highContrast: 'அதிக மாறுபாடு',
+    selectLanguage: 'மொழியைத் தேர்ந்தெடுக்கவும்',
+    adminPortal: 'நிர்வாக போர்ட்டல்',
+  },
+  te: {
+    skipToMain: 'ప్రధాన విషయానికి వెళ్ళండి',
+    governmentOfIndia: 'భారత ప్రభుత్వం',
+    indiaGovIn: 'ఇండియా.గవర్నమెంట్.ఇన్',
+    aMinus: 'ఎ-',
+    aNormal: 'ఎ',
+    aPlus: 'ఎ+',
+    highContrast: 'అధిక వ్యత్యాసం',
+    selectLanguage: 'భాషను ఎంచుకోండి',
+    adminPortal: 'అడ్మిన్ పోర్టల్',
+  },
+  bn: {
+    skipToMain: 'মূল বিষয়বস্তুতে যান',
+    governmentOfIndia: 'ভারত সরকার',
+    indiaGovIn: 'ইন্ডিয়া.সরকার.ইন',
+    aMinus: 'ক-',
+    aNormal: 'ক',
+    aPlus: 'ক+',
+    highContrast: 'উচ্চ বৈসাদৃশ্য',
+    selectLanguage: 'ভাষা নির্বাচন করুন',
+    adminPortal: 'অ্যাডমিন পোর্টাল',
+  },
+  mr: {
+    skipToMain: 'मुख्य मजकुरावर जा',
+    governmentOfIndia: 'भारत सरकार',
+    indiaGovIn: 'इंडिया.सरकार.इन',
+    aMinus: 'अ-',
+    aNormal: 'अ',
+    aPlus: 'अ+',
+    highContrast: 'उच्च कॉन्ट्रास्ट',
+    selectLanguage: 'भाषा निवडा',
+    adminPortal: 'अॅडमिन पोर्टल',
+  },
+};
+
+export const SUPPORTED_LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'hi', label: 'हिंदी' },
+  { code: 'ta', label: 'தமிழ்' },
+  { code: 'te', label: 'తెలుగు' },
+  { code: 'bn', label: 'বাংলা' },
+  { code: 'mr', label: 'मराठी' },
+];

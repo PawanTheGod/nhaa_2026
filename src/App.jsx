@@ -18,6 +18,7 @@ import LoginScreen from './pages/admin/LoginScreen';
 import OperatorScreen from './pages/admin/OperatorScreen';
 import ResponderScreen from './pages/admin/ResponderScreen';
 import AdminLayout from './components/admin/AdminLayout';
+import { LangProvider } from './i18n/LangContext';
 
 const AdminShell = ({ children }) => (
   <AdminLayout>{children}</AdminLayout>
@@ -1816,8 +1817,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <LangProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </LangProvider>
   );
 }

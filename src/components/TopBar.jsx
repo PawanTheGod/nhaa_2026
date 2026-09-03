@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ASSETS } from '../assets';
+import { useLang } from '../i18n/LangContext';
+import { SUPPORTED_LANGUAGES } from '../i18n/translations';
 
 const FONT_SIZES = [
   { label: 'A-', px: 12 },
@@ -10,10 +12,11 @@ const FONT_SIZES = [
 const TopBar = () => {
   const [fontSize, setFontSize] = useState(14);
   const [highContrast, setHighContrast] = useState(false);
-  const [lang, setLang] = useState('en');
+  const { lang, setLang, t } = useLang();
 
   useEffect(() => {
-    document.documentElement.style.fontSize = `${fontSize}px`;
+    // Use !important via setProperty to override Tailwind's text-* classes
+    document.documentElement.style.setProperty('font-size', `${fontSize}px`, 'important');
   }, [fontSize]);
 
   useEffect(() => {
@@ -23,10 +26,6 @@ const TopBar = () => {
       document.documentElement.style.filter = '';
     }
   }, [highContrast]);
-
-  useEffect(() => {
-    document.documentElement.lang = lang;
-  }, [lang]);
 
   return (
     <div style={{ background: '#0073E6', color: '#fff', fontSize: 13, padding: '7px 0' }}>
@@ -39,7 +38,7 @@ const TopBar = () => {
             style={{ height: 16, width: 'auto' }}
             onError={(e) => { e.target.style.display = 'none'; }}
           />
-          <span>Government of India</span>
+          <span>{t('governmentOfIndia')}</span>
           <span style={{ opacity: 0.6 }}>|</span>
           <a
             href="https://india.gov.in/"
@@ -47,17 +46,17 @@ const TopBar = () => {
             rel="noreferrer"
             style={{ color: '#fff', textDecoration: 'none' }}
           >
-            India.gov.in ↗
+            {t('indiaGovIn')} ↗
           </a>
         </div>
 
         {/* Right: Accessibility controls + Skip link */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, fontSize: 13, fontWeight: 500 }}>
-          <a href="#content" style={{ color: '#fff', textDecoration: 'none' }}>Skip to Main Content</a>
+          <a href="#content" style={{ color: '#fff', textDecoration: 'none' }}>{t('skipToMain')}</a>
           <span style={{ opacity: 0.4 }}>|</span>
 
           {/* Text resize */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} role="group" aria-label="Text size">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} role="group" aria-label={t('aNormal')}>
             {FONT_SIZES.map((opt) => (
               <button
                 key={opt.label}
@@ -99,17 +98,17 @@ const TopBar = () => {
               fontSize: 13,
             }}
           >
-            High Contrast
+            {t('highContrast')}
           </button>
           <span style={{ opacity: 0.4 }}>|</span>
 
           {/* Language selector */}
           <label>
-            <span style={{ position: 'absolute', left: '-9999px' }}>Select language</span>
+            <span style={{ position: 'absolute', left: '-9999px' }}>{t('selectLanguage')}</span>
             <select
               value={lang}
               onChange={(e) => setLang(e.target.value)}
-              aria-label="Select language"
+              aria-label={t('selectLanguage')}
               style={{
                 background: '#0073E6',
                 color: '#fff',
@@ -120,12 +119,11 @@ const TopBar = () => {
                 cursor: 'pointer',
               }}
             >
-              <option value="en">English</option>
-              <option value="hi">हिंदी</option>
-              <option value="ta">தமிழ்</option>
-              <option value="te">తెలుగు</option>
-              <option value="bn">বাংলা</option>
-              <option value="mr">मराठी</option>
+              {SUPPORTED_LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.label}
+                </option>
+              ))}
             </select>
           </label>
         </div>

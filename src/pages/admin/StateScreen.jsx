@@ -7,6 +7,8 @@ import { stateMockData } from '../../data/stateMockData';
 import { getCaseStats, getCaseTrend, getDistrictComparison } from '../../services/api';
 import TrendChart from '../../components/admin/TrendChart';
 import StateComparisonTable from '../../components/admin/StateComparisonTable';
+import { useLang } from '../../i18n/LangContext';
+import { ADMIN_TRANSLATIONS } from '../../i18n/adminTranslations';
 
 export default function StateScreen() {
   const [stats, setStats] = useState(null);
@@ -14,6 +16,8 @@ export default function StateScreen() {
   const [districtTable, setDistrictTable] = useState([]);
   const [useMock, setUseMock] = useState(false);
   const [selectedState] = useState('Delhi');
+  const { lang } = useLang();
+  const at = ADMIN_TRANSLATIONS[lang] || ADMIN_TRANSLATIONS.en;
 
   useEffect(() => {
     let cancelled = false;
@@ -71,7 +75,7 @@ export default function StateScreen() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', margin: 0 }}>{selectedState} State Dashboard</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', margin: 0 }}>{selectedState} {at.state} {at.dashboardTitle.replace('NHAA – ', '').replace('अधिकारी ', '').replace('அதிகாரி ', '').replace('అధికారి ', '').replace('কর্মকর্তা ', '').replace('अधिकारी ', '') || 'Dashboard'}</h2>
           <p style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>
             {useMock ? '(Mock data -- API unreachable)' : '(Live data from Case API)'}
           </p>
