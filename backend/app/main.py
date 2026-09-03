@@ -8,6 +8,7 @@ from app.routes.websocket import router as ws_router
 from app.routes.stats import router as stats_router
 from app.routes.notifications import router as notifications_router
 from app.routes.agent import router as agent_router
+from app.routes.twilio_webhook import router as twilio_router
 # ── Aditya's auth & admin panel layer ────────────────────────────────────────
 from app.routes.auth import router as auth_router
 from app.routes.admin_panel import router as admin_panel_router
@@ -65,6 +66,7 @@ app.include_router(ra_router, prefix="/api")
 app.include_router(stats_router, prefix="/api")
 app.include_router(notifications_router, prefix="/api")
 app.include_router(agent_router, prefix="/api")
+app.include_router(twilio_router)
 app.include_router(ws_router)
 
 # Register Vedika's AI Perception Layer Routers

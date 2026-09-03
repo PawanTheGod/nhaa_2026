@@ -4,7 +4,7 @@ from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import AsyncSessionLocal
-from app.models import Cases, RiskTier
+from app.models import Cases, RiskTier, CaseStatus
 from app.services.agent.decision_engine import determine_risk_tier, recommend_actions
 from app.services.agent.openrouter import generate_explanation
 from app.services.agent.sla import predict_sla_breach
@@ -57,13 +57,16 @@ async def process_case(data: AgentProcessInput):
 async def sla_predictor(db: AsyncSession = Depends(get_db)):
     """
     Returns open cases ordered by SLA breach risk.
+    Uses real CaseStatus enum values from app.models (new, in_progress, escalated).
+    Closed and resolved cases are excluded.
     """
-    # Fetch cases that are not resolved (assuming status is open/pending)
     result = await db.execute(
-        select(Cases).where(Cases.status.in_(["pending", "in_progress"]))
+        select(Cases).where(
+            Cases.status.in_([CaseStatus.new, CaseStatus.in_progress, CaseStatus.escalated])
+        )
     )
     cases = result.scalars().all()
-    
+
     predictions = predict_sla_breach(cases)
     return predictions
 

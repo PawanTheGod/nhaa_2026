@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import {
   listCases,
@@ -46,6 +46,13 @@ export default function OperatorScreen() {
   const [demoBusy, setDemoBusy] = useState(false);
   const [demoMsg, setDemoMsg] = useState(null);
 
+  const mergeMock = (apiCases) => {
+    // Always merge: live API cases first, then benchmark mock cases (IDs 1001-1008) that don't conflict
+    const existingIds = new Set(apiCases.map(c => c.id));
+    const extraMock = operatorMockCases.filter(m => !existingIds.has(m.id));
+    return [...apiCases, ...extraMock];
+  };
+
   const reloadCases = async () => {
     if (!session?.token) {
       setCases(operatorMockCases);
@@ -55,7 +62,7 @@ export default function OperatorScreen() {
     try {
       const data = await listCases({ limit: 100 });
       if (Array.isArray(data)) {
-        setCases(data.map(apiToCase));
+        setCases(mergeMock(data.map(apiToCase)));
         setUseMock(false);
       }
     } catch {
@@ -105,10 +112,11 @@ export default function OperatorScreen() {
         const data = await listCases({ limit: 100 });
         if (!cancelled) {
           if (Array.isArray(data) && data.length) {
-            setCases(data.map(apiToCase));
+            setCases(mergeMock(data.map(apiToCase)));
             setUseMock(false);
           } else if (Array.isArray(data)) {
-            setCases([]);
+            // API returned empty array — just show mock
+            setCases(operatorMockCases);
             setUseMock(false);
           } else {
             setCases(operatorMockCases);

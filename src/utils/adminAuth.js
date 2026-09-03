@@ -1,47 +1,26 @@
 const SESSION_KEY = 'nhaa_admin_session';
 
-/** Five agency roles that share /admin/responder (filtered by session.role). */
-export const RESPONDER_ROLES = ['police', 'dlsa', 'medical', 'counselor', 'witness_protection'];
+/** No separate responder roles — all roles are in the police hierarchy. */
+export const RESPONDER_ROLES = [];
 
 /**
- * All 9 officer_role enum values (Vinit schema).
- * operator | district | state | ministry | police | dlsa | medical | counselor | witness_protection
+ * Real Indian Police hierarchy:
+ * operator (Call Centre) → dsp (Dy. SP) → sp (Superintendent) → ig (Inspector General)
  */
-export const ALL_ROLES = [
-  'operator',
-  'district',
-  'state',
-  'ministry',
-  'police',
-  'dlsa',
-  'medical',
-  'counselor',
-  'witness_protection',
-];
+export const ALL_ROLES = ['operator', 'dsp', 'sp', 'ig'];
 
 export const ROLE_LABELS = {
   operator: 'Call Centre Operator',
-  police: 'Police (SHO / IO)',
-  dlsa: 'District Legal Services Authority',
-  medical: 'District Hospital / Medical Officer',
-  counselor: 'Counsellor / One-Stop Centre',
-  witness_protection: 'Witness Protection Cell',
-  district: 'District Nodal Officer',
-  state: 'State Nodal Officer',
-  ministry: 'Ministry Oversight (MoSJE)',
+  dsp: 'DSP (Dy. Superintendent of Police)',
+  sp: 'SP (Superintendent of Police)',
+  ig: 'IG (Inspector General of Police)',
 };
 
-/** Explicit post-login redirect for every role value. */
 export const ROLE_REDIRECTS = {
   operator: '/admin/operator',
-  police: '/admin/responder',
-  dlsa: '/admin/responder',
-  medical: '/admin/responder',
-  counselor: '/admin/responder',
-  witness_protection: '/admin/responder',
-  district: '/admin/district',
-  state: '/admin/state',
-  ministry: '/admin/ministry',
+  dsp: '/admin/dsp',
+  sp: '/admin/sp',
+  ig: '/admin/ig',
 };
 
 export function getSession() {
@@ -53,10 +32,6 @@ export function getSession() {
   }
 }
 
-/**
- * Persist officer session. Prefer including `token` from POST /auth/login
- * so subsequent API calls can send Authorization: Bearer.
- */
 export function setSession(user) {
   localStorage.setItem(SESSION_KEY, JSON.stringify(user));
 }
@@ -69,7 +44,6 @@ export function getToken() {
   return getSession()?.token || null;
 }
 
-/** Headers for authenticated admin API calls (empty object if no token). */
 export function getAuthHeaders() {
   const token = getToken();
   if (!token) return {};

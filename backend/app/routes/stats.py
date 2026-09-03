@@ -151,7 +151,7 @@ async def get_district_comparison(
             "resolutionRate": rate,
             "highRisk": 0,
         })
-    return sorted(districts, key=lambda d: d.cases, reverse=True)
+    return sorted(districts, key=lambda d: d["cases"], reverse=True)
 
 
 @router.get("/states", response_model=list)
@@ -180,4 +180,4 @@ async def get_state_comparison(
             "highRisk": 0,
             "critical": row.critical,
         })
-    return sorted(states, key=lambda s: s.cases, reverse=True)
+    return sorted(states, key=lambda s: s["cases"], reverse=True)

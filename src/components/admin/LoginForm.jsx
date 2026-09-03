@@ -82,8 +82,11 @@ export default function LoginForm({ onSubmit, error, busy = false }) {
         {busy ? 'Signing in…' : 'Sign In'}
       </button>
       <p id="login-demo-hint" style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.6 }}>
-        Use <code>operator</code> / <code>Test@1234</code> (or <code>demo123</code>).
-        Works offline with mock data; with backend running you get a live JWT.
+        Test logins (password <code>Test@1234</code>):<br />
+        • <code>operator</code> (Call Centre)<br />
+        • <code>dsp</code> (Dy. Superintendent — District)<br />
+        • <code>sp</code> (Superintendent — State)<br />
+        • <code>ig</code> (Inspector General — National)
       </p>
     </form>
   );

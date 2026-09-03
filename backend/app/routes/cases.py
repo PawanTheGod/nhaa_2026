@@ -105,15 +105,16 @@ async def list_cases(
     """
     query = select(Cases).options(selectinload(Cases.risk_assessments)).order_by(Cases.created_at.desc()).limit(limit).offset(offset)
 
-    if role == "operator":
+    if role in ("operator", "district", "dsp"):
         if district:
-            query = query.where(Cases.district == district)
-    elif role == "district":
-        if district:
-            query = query.where(Cases.district == district)
+            query = query.where(
+                (Cases.district == district) | (Cases.district == "Unknown") | (Cases.district.is_(None))
+            )
     elif role == "state":
         if state:
-            query = query.where(Cases.state == state)
+            query = query.where(
+                (Cases.state == state) | (Cases.state == "Unknown") | (Cases.state.is_(None))
+            )
     # ministry sees all
 
     if status:

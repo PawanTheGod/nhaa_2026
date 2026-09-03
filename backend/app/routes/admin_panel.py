@@ -42,7 +42,7 @@ router = APIRouter(tags=["admin-panel"])
 
 # Live Supabase `cases.current_level` is INTEGER (0–3). Admin actions historically
 # wrote role strings. Map both ways so JWT admin routes work against Vinit's schema.
-_LEVEL_INT_TO_NAME = {0: "operator", 1: "district", 2: "state", 3: "ministry"}
+_LEVEL_INT_TO_NAME = {0: "operator", 1: "dsp", 2: "sp", 3: "ig"}
 _LEVEL_NAME_TO_INT = {v: k for k, v in _LEVEL_INT_TO_NAME.items()}
 
 
@@ -133,8 +133,8 @@ def _case_list_item(case: Cases) -> dict[str, Any]:
         "state": case.state,
         "created_at": case.created_at.isoformat() if case.created_at else None,
         "updated_at": case.updated_at.isoformat() if case.updated_at else None,
-        "risk_tier": case.risk_tier.value if case.risk_tier else None,
-        "svi_score": float(case.svi_score) if case.svi_score is not None else None,
+        "risk_tier": case.risk_tier.value if case.risk_tier else (ra.risk_tier.value if ra and ra.risk_tier else None),
+        "svi_score": float(case.svi_score) if case.svi_score is not None else (float(ra.svi_score) if ra and ra.svi_score is not None else None),
         "recommended_action": recommended_action,
         "is_silent_signal": case.is_silent_signal,
         "incident_description": case.incident_description,
@@ -444,7 +444,7 @@ async def process_case_action(
 async def sla_status(
     db: AsyncSession = Depends(get_db),
     officer: TokenPayload = Depends(
-        require_role("operator", "district", "state", "ministry")
+        require_role("operator", "dsp", "sp", "ig")
     ),
     case_id: Optional[int] = Query(None, description="Limit to a single case"),
     limit: int = Query(50, ge=1, le=200),
@@ -506,13 +506,13 @@ async def sla_status(
 async def stats_district(
     db: AsyncSession = Depends(get_db),
     officer: TokenPayload = Depends(
-        require_role("district", "state", "ministry")
+        require_role("dsp", "sp", "ig")
     ),
 ):
     """
-    Returns aggregate stats for the officer's district (district role),
-    or all districts within the officer's state (state role),
-    or all districts nationally (ministry role).
+    Returns aggregate stats for the officer's district (dsp role),
+    or all districts within the officer's state (sp role),
+    or all districts nationally (ig role).
     """
     query = select(
         Cases.district,
@@ -524,11 +524,11 @@ async def stats_district(
     ).where(Cases.district.is_not(None))
 
     # Scope
-    if officer.role == OfficerRole.district.value and officer.district:
+    if officer.role == OfficerRole.dsp.value and officer.district:
         query = query.where(Cases.district == officer.district)
-    elif officer.role == OfficerRole.state.value and officer.state:
+    elif officer.role == OfficerRole.sp.value and officer.state:
         query = query.where(Cases.state == officer.state)
-    # ministry — no filter
+    # ig — no filter
 
     query = query.group_by(Cases.district).order_by(func.count().desc())
     result = await db.execute(query)
@@ -559,11 +559,11 @@ async def stats_district(
 )
 async def stats_state(
     db: AsyncSession = Depends(get_db),
-    officer: TokenPayload = Depends(require_role("state", "ministry")),
+    officer: TokenPayload = Depends(require_role("sp", "ig")),
 ):
     """
-    Returns aggregate stats for the officer's state (state role)
-    or all states (ministry role).
+    Returns aggregate stats for the officer's state (sp role)
+    or all states (ig role).
     """
     query = select(
         Cases.state,
@@ -574,9 +574,9 @@ async def stats_state(
         func.avg(Cases.svi_score).label("avg_svi"),
     ).where(Cases.state.is_not(None))
 
-    if officer.role == OfficerRole.state.value and officer.state:
+    if officer.role == OfficerRole.sp.value and officer.state:
         query = query.where(Cases.state == officer.state)
-    # ministry — no filter
+    # ig — no filter
 
     query = query.group_by(Cases.state).order_by(func.count().desc())
     result = await db.execute(query)
@@ -607,7 +607,7 @@ async def stats_state(
 )
 async def stats_national(
     db: AsyncSession = Depends(get_db),
-    _officer: TokenPayload = Depends(require_role("ministry")),
+    _officer: TokenPayload = Depends(require_role("ig")),
 ):
     """
     Top-level national KPIs for the Ministry dashboard.

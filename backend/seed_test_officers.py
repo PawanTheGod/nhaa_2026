@@ -1,34 +1,25 @@
 """
-seed_test_officers.py
+seed_test_officers.py — Real Indian Police Hierarchy
 ─────────────────────
-Creates one test officer account per role (8 total) so that Pawan, Pushp,
-and Vinit can immediately test all access levels.
+Creates 4 test officer accounts (Operator, DSP, SP, IG) for demo/testing.
 
-Run from the backend/ directory:
-    python seed_test_officers.py
-
-The script is idempotent — if a username already exists it will be skipped.
+Run: cd backend && python seed_test_officers.py
 
 Test credentials (all passwords: Test@1234):
-┌────────────────────────┬──────────────────────┬──────────────┬─────────────────┐
-│ Username               │ Role                 │ District     │ State           │
-├────────────────────────┼──────────────────────┼──────────────┼─────────────────┤
-│ op_delhi_01            │ operator             │ Central Delhi│ Delhi           │
-│ dist_delhi_01          │ district             │ Central Delhi│ Delhi           │
-│ state_delhi_01         │ state                │ —            │ Delhi           │
-│ ministry_01            │ ministry             │ —            │ —               │
-│ police_delhi_01        │ police               │ Central Delhi│ Delhi           │
-│ dlsa_delhi_01          │ dlsa                 │ Central Delhi│ Delhi           │
-│ medical_delhi_01       │ medical              │ Central Delhi│ Delhi           │
-│ counselor_delhi_01     │ counselor            │ Central Delhi│ Delhi           │
-└────────────────────────┴──────────────────────┴──────────────┴─────────────────┘
+┌──────────────────┬──────────────────────────────────────┬──────────────┬──────────┐
+│ Username         │ Role                                 │ District     │ State    │
+├──────────────────┼──────────────────────────────────────┼──────────────┼──────────┤
+│ operator         │ Call Centre Operator (Level 0)       │ Central Delhi│ Delhi    │
+│ dsp              │ Dy. Superintendent of Police (Lv 1)  │ Central Delhi│ Delhi    │
+│ sp               │ Superintendent of Police (Lv 2)      │ —            │ Delhi    │
+│ ig               │ Inspector General of Police (Lv 3)   │ —            │ —        │
+└──────────────────┴──────────────────────────────────────┴──────────────┴──────────┘
 """
 
 import asyncio
 import sys
 import os
 
-# Allow running from the backend/ directory without installing the package
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from sqlalchemy import select
@@ -40,123 +31,42 @@ DEFAULT_PASSWORD = "Test@1234"
 
 TEST_OFFICERS = [
     {
-        "name": "Priya Sharma",
+        "name": "Priya Sharma (Operator)",
         "username": "operator",
-        "role": OfficerRole.operator,
-        "district": "Central Delhi",
-        "state": "Delhi",
-        "badge_id": "OPR-000",
-    },
-    {
-        "name": "Ravi Kumar (Operator)",
-        "username": "op_delhi_01",
         "role": OfficerRole.operator,
         "district": "Central Delhi",
         "state": "Delhi",
         "badge_id": "OPR-001",
     },
     {
-        "name": "Sunita Sharma (District Officer)",
-        "username": "dist_delhi_01",
-        "role": OfficerRole.district,
+        "name": "DSP Rajesh Kumar",
+        "username": "dsp",
+        "role": OfficerRole.dsp,
         "district": "Central Delhi",
         "state": "Delhi",
-        "badge_id": "DST-001",
+        "badge_id": "DSP-001",
     },
     {
-        "name": "Anand Singh (State Officer)",
-        "username": "state_delhi_01",
-        "role": OfficerRole.state,
+        "name": "SP Anand Singh",
+        "username": "sp",
+        "role": OfficerRole.sp,
         "district": None,
         "state": "Delhi",
-        "badge_id": "ST-001",
+        "badge_id": "SP-001",
     },
     {
-        "name": "Priya Mehta (Ministry Admin)",
-        "username": "ministry_01",
-        "role": OfficerRole.ministry,
+        "name": "IG Priya Mehta",
+        "username": "ig",
+        "role": OfficerRole.ig,
         "district": None,
         "state": None,
-        "badge_id": "MIN-001",
-    },
-    {
-        "name": "Inspector Ramesh (Police)",
-        "username": "police_delhi_01",
-        "role": OfficerRole.police,
-        "district": "Central Delhi",
-        "state": "Delhi",
-        "badge_id": "POL-001",
-    },
-    {
-        "name": "Inspector Ramesh (Police)",
-        "username": "police",
-        "role": OfficerRole.police,
-        "district": "Central Delhi",
-        "state": "Delhi",
-        "badge_id": "POL-000",
-    },
-    {
-        "name": "Advocate Neha Gupta (DLSA)",
-        "username": "dlsa_delhi_01",
-        "role": OfficerRole.dlsa,
-        "district": "Central Delhi",
-        "state": "Delhi",
-        "badge_id": "DLSA-001",
-    },
-    {
-        "name": "Advocate Neha Gupta (DLSA)",
-        "username": "dlsa",
-        "role": OfficerRole.dlsa,
-        "district": "Central Delhi",
-        "state": "Delhi",
-        "badge_id": "DLSA-000",
-    },
-    {
-        "name": "Dr. Kavita Rao (Medical)",
-        "username": "medical_delhi_01",
-        "role": OfficerRole.medical,
-        "district": "Central Delhi",
-        "state": "Delhi",
-        "badge_id": "MED-001",
-    },
-    {
-        "name": "Dr. Kavita Rao (Medical)",
-        "username": "medical",
-        "role": OfficerRole.medical,
-        "district": "Central Delhi",
-        "state": "Delhi",
-        "badge_id": "MED-000",
-    },
-    {
-        "name": "Counselor Deepa Nair",
-        "username": "counselor_delhi_01",
-        "role": OfficerRole.counselor,
-        "district": "Central Delhi",
-        "state": "Delhi",
-        "badge_id": "CNS-001",
-    },
-    {
-        "name": "Counselor Deepa Nair",
-        "username": "counselor",
-        "role": OfficerRole.counselor,
-        "district": "Central Delhi",
-        "state": "Delhi",
-        "badge_id": "CNS-000",
-    },
-    {
-        "name": "Major Vikram (Witness Protection)",
-        "username": "witness_protection",
-        "role": OfficerRole.witness_protection,
-        "district": "Central Delhi",
-        "state": "Delhi",
-        "badge_id": "WP-001",
+        "badge_id": "IG-001",
     },
 ]
 
 
 async def seed():
-    # Ensure all tables exist (safe to call on an existing DB)
-    import app.models  # noqa: F401 — register models
+    import app.models  # noqa: F401
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -167,7 +77,6 @@ async def seed():
 
     async with AsyncSessionLocal() as db:
         for data in TEST_OFFICERS:
-            # Check if username already exists
             result = await db.execute(
                 select(Officers).where(Officers.username == data["username"])
             )
@@ -188,7 +97,7 @@ async def seed():
                 is_active=True,
             )
             db.add(officer)
-            await db.flush()  # get the id before commit
+            await db.flush()
             print(f"  [OK]  CREATE {data['username']}  role={data['role'].value}  id={officer.id}")
             created += 1
 

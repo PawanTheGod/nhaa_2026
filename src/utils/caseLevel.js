@@ -1,17 +1,16 @@
-/** Map API current_level (string or legacy int) to a display label. */
+/** Map API current_level (int) to role key — real police hierarchy. */
 const LEVEL_BY_INT = {
   0: 'operator',
-  1: 'district',
-  2: 'state',
-  3: 'ministry',
+  1: 'dsp',
+  2: 'sp',
+  3: 'ig',
 };
 
 const LEVEL_LABELS = {
   operator: 'Operator',
-  district: 'District',
-  state: 'State',
-  ministry: 'Ministry',
-  police: 'Police',
+  dsp: 'DSP',
+  sp: 'SP',
+  ig: 'IG',
 };
 
 /**
@@ -28,7 +27,7 @@ export function formatCurrentLevel(level) {
   return LEVEL_LABELS[key] || key.replace(/_/g, ' ');
 }
 
-/** Pretty label for engine action strings e.g. escalate_to_district */
+/** Pretty label for engine action strings e.g. escalate_to_dsp */
 export function formatActionLabel(action) {
   if (!action) return '';
   return String(action)
@@ -42,25 +41,21 @@ export function mockAllowedActions(caseData, role = 'operator') {
   const status = String(caseData?.status || 'new').toLowerCase();
   const level = caseData?.current_level;
 
-  if (['police', 'dlsa', 'medical', 'counselor', 'witness_protection'].includes(role)) {
-    return caseData?.actioned ? [] : ['mark_actioned'];
-  }
-
   if (status === 'resolved' || status === 'closed') {
     return ['reopen'];
   }
 
   const actions = [];
   if (status === 'new' || status === 'in_progress') {
-    actions.push('assign_operator', 'escalate_to_district', 'dispatch_police', 'resolve');
+    actions.push('assign_operator', 'escalate_to_dsp', 'resolve');
   }
   if (status === 'escalated') {
     const lvl = typeof level === 'number' ? LEVEL_BY_INT[level] : String(level || '').toLowerCase();
-    if (lvl === 'district' || lvl === '1') actions.push('escalate_to_state', 'resolve');
-    else if (lvl === 'state' || lvl === '2') actions.push('escalate_to_ministry', 'resolve');
-    else if (lvl === 'ministry' || lvl === '3') actions.push('resolve', 'close');
-    else actions.push('escalate_to_district', 'resolve');
+    if (lvl === 'dsp' || lvl === '1') actions.push('escalate_to_sp', 'resolve');
+    else if (lvl === 'sp' || lvl === '2') actions.push('escalate_to_ig', 'resolve');
+    else if (lvl === 'ig' || lvl === '3') actions.push('resolve', 'close');
+    else actions.push('escalate_to_dsp', 'resolve');
   }
-  if (actions.length === 0) actions.push('resolve', 'escalate_to_district');
+  if (actions.length === 0) actions.push('resolve', 'escalate_to_dsp');
   return actions;
 }

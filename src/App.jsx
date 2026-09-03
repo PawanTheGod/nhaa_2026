@@ -340,7 +340,7 @@ function Header() {
 
 
           <Link
-            to="/admin/district"
+            to="/admin/dsp"
             style={{
               background: '#003366',
               color: '#fff',
@@ -1779,10 +1779,11 @@ function AppContent() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isDedicatedPortal = location.pathname === '/nhaa' || location.pathname === '/sambal';
+  const showPublicHeader = !isDedicatedPortal && !isAdminRoute;
 
   return (
     <>
-      {!isDedicatedPortal && (
+      {showPublicHeader && (
         <>
           <TopBar />
           <Header />
@@ -1804,9 +1805,11 @@ function AppContent() {
          <Route path="/admin/login" element={<LoginScreen />} />
          <Route path="/admin" element={<LoginScreen />} />
          <Route path="/admin/operator" element={<AdminShell><OperatorScreen /></AdminShell>} />
-         <Route path="/admin/responder" element={<AdminShell><ResponderScreen /></AdminShell>} />
+         <Route path="/admin/dsp" element={<AdminShell><DistrictScreen /></AdminShell>} />
          <Route path="/admin/district" element={<AdminShell><DistrictScreen /></AdminShell>} />
+         <Route path="/admin/sp" element={<AdminShell><StateScreen /></AdminShell>} />
          <Route path="/admin/state" element={<AdminShell><StateScreen /></AdminShell>} />
+         <Route path="/admin/ig" element={<AdminShell><MinistryScreen /></AdminShell>} />
          <Route path="/admin/ministry" element={<AdminShell><MinistryScreen /></AdminShell>} />
        </Routes>
 

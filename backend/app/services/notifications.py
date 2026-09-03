@@ -33,14 +33,12 @@ from app.models import (
 # Source: officer hierarchy table in the SIH master design doc.
 TIER_RECIPIENTS: dict[RiskTier, list[OfficerRole]] = {
     RiskTier.low: [OfficerRole.operator],
-    RiskTier.moderate: [OfficerRole.district],
-    RiskTier.high: [OfficerRole.district, OfficerRole.police, OfficerRole.dlsa],
+    RiskTier.moderate: [OfficerRole.dsp],
+    RiskTier.high: [OfficerRole.dsp, OfficerRole.sp],
     RiskTier.critical: [
-        OfficerRole.district,
-        OfficerRole.state,
-        OfficerRole.police,
-        OfficerRole.witness_protection,
-        OfficerRole.medical,
+        OfficerRole.dsp,
+        OfficerRole.sp,
+        OfficerRole.ig,
     ],
 }
 

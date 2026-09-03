@@ -37,7 +37,11 @@ class RiskTier(str, PyEnum):
 
 
 class OfficerRole(str, PyEnum):
-    operator = "operator"
+    operator = "operator"      # NHAA Call Centre Operator (Level 0)
+    dsp = "dsp"                # Deputy Superintendent of Police — District level (Level 1)
+    sp = "sp"                  # Superintendent of Police — District/State level (Level 2)
+    ig = "ig"                  # Inspector General of Police — State/Zone level (Level 3)
+    # Compatibility with existing historical DB rows
     district = "district"
     state = "state"
     ministry = "ministry"

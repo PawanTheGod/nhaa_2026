@@ -36,10 +36,10 @@ FLAG_TIER_OVERRIDES: dict[str, RiskTier] = {
 # Maps (status, current_level) -> list[str] of allowed actions.
 ALLOWED_ACTIONS_BY_STATE: dict[tuple, list[str]] = {
     (CaseStatus.new,         None):                ["assign_operator", "ai_triage"],
-    (CaseStatus.in_progress, OfficerRole.operator): ["escalate_to_district", "resolve", "close"],
-    (CaseStatus.escalated,   OfficerRole.district): ["escalate_to_state", "resolve", "dispatch_police", "dispatch_dlsa"],
-    (CaseStatus.escalated,   OfficerRole.state):    ["escalate_to_ministry", "resolve"],
-    (CaseStatus.escalated,   OfficerRole.ministry): ["resolve", "direct_intervention"],
+    (CaseStatus.in_progress, OfficerRole.operator): ["escalate_to_dsp", "resolve", "close"],
+    (CaseStatus.escalated,   OfficerRole.dsp):      ["escalate_to_sp", "resolve", "investigate"],
+    (CaseStatus.escalated,   OfficerRole.sp):       ["escalate_to_ig", "resolve"],
+    (CaseStatus.escalated,   OfficerRole.ig):       ["resolve", "direct_intervention"],
     (CaseStatus.resolved,    None):                 ["close", "reopen"],
     (CaseStatus.closed,      None):                 [],
 }
@@ -53,21 +53,14 @@ def get_allowed_actions(status: CaseStatus, current_level: OfficerRole | None) -
     return ALLOWED_ACTIONS_BY_STATE.get((status, current_level), [])
 
 # ─── Authority matrix ─────────────────────────────────────────────────────────
-# Single 9-value OfficerRole enum (matches Vinit's models.py exactly):
-#   operator, district, state, ministry, police, dlsa, medical,
-#   counselor, witness_protection
+# Indian Police Hierarchy: operator, dsp, sp, ig
 #
 # Maps role -> set of actions that role is allowed to perform.
 AUTHORITY_MATRIX: dict[OfficerRole, set[str]] = {
-    OfficerRole.operator:           {"ai_triage", "assign_operator", "escalate_to_district", "resolve"},
-    OfficerRole.district:           {"escalate_to_state", "dispatch_police", "dispatch_dlsa", "resolve", "confirm_critical"},
-    OfficerRole.state:              {"escalate_to_ministry", "resolve", "confirm_critical"},
-    OfficerRole.ministry:           {"direct_intervention", "resolve"},
-    OfficerRole.police:             {"mark_actioned"},
-    OfficerRole.dlsa:               {"mark_actioned"},
-    OfficerRole.medical:            {"mark_actioned"},
-    OfficerRole.counselor:          {"mark_actioned"},
-    OfficerRole.witness_protection: {"mark_actioned"},
+    OfficerRole.operator: {"ai_triage", "assign_operator", "escalate_to_dsp", "resolve"},
+    OfficerRole.dsp:      {"escalate_to_sp", "investigate", "resolve", "confirm_critical"},
+    OfficerRole.sp:       {"escalate_to_ig", "resolve", "confirm_critical"},
+    OfficerRole.ig:       {"direct_intervention", "resolve", "close"},
 }
 
 def check_authority(role: OfficerRole, action: str, status: CaseStatus, current_level: OfficerRole | None) -> bool:

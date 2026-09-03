@@ -385,7 +385,7 @@ export default function NhaaPage() {
 
             {/* Admin Login Button */}
             <Link
-              to="/admin/district"
+              to="/admin/login"
               style={{
                 background: '#003366',
                 color: '#FFFFFF',
