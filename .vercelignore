@@ -1,0 +1,11 @@
+api
+backend
+perception
+perception-service
+stt
+tests
+requirements.txt
+config.py
+demo.py
+*.py
+*.mp3
