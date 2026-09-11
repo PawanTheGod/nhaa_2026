@@ -110,26 +110,11 @@ def _twiml(content: str) -> Response:
 
 def _say(text: str, lang_code: str = "en", base_url: str = "") -> str:
     """
-    Renders high-fidelity Indian audio using Sarvam AI via <Play>, with <Say> fallback.
+    Renders high-fidelity Indian speech using Twilio Amazon Polly Indian voice (Polly.Aditi).
+    Outputs a single <Say> verb to prevent any duplicate audio playback.
     """
     cfg = IVRS.get(lang_code, IVRS["en"])
-    fallback = f'<Say voice="{cfg["tts_voice"]}" language="{cfg["tts_lang"]}">{text}</Say>'
-    if base_url:
-        encoded_text = quote_plus(text)
-        play_url = f"{base_url}/twilio/tts?lang={lang_code}&amp;text={encoded_text}"
-        return f'    <Play>{play_url}</Play>\n    {fallback}'
-    return f'    {fallback}'
-
-
-@router.get("/twilio/tts")
-async def serve_sarvam_tts_audio(text: str, lang: str = "hi"):
-    """
-    Endpoint called by Twilio <Play> to stream high-fidelity Sarvam Indian TTS audio.
-    """
-    audio_bytes = await generate_sarvam_speech(text, language=lang)
-    if not audio_bytes:
-        raise HTTPException(status_code=500, detail="Sarvam TTS generation failed")
-    return Response(content=audio_bytes, media_type="audio/wav")
+    return f'    <Say voice="{cfg["tts_voice"]}" language="{cfg["tts_lang"]}">{text}</Say>'
 
 
 # ─── Step 1: Language selection ──────────────────────────────────────────────
@@ -140,11 +125,11 @@ async def twilio_voice(request: Request):
 
     body = "\n".join([
         f'  <Gather numDigits="1" action="{action}" method="POST" timeout="10">',
-        _say("Welcome to the National Helpline Against Atrocities. Press 1 for English.", "en", base),
-        _say("Rashtriya Atyachar Virodhi Helpline mein aapka swagat hai. Hindi ke liye 2 dabayen.", "hi", base),
-        _say("Rashtriya Atyachar Virodhi Helpline madhe swagat aahe. Marathi sathi 3 daba.", "mr", base),
+        _say("Welcome to the National Helpline Against Atrocities. Press 1 for English.", "en"),
+        _say("Rashtriya Atyachar Virodhi Helpline mein aapka swagat hai. Hindi ke liye 2 dabayen.", "hi"),
+        _say("Rashtriya Atyachar Virodhi Helpline madhe swagat aahe. Marathi sathi 3 daba.", "mr"),
         '  </Gather>',
-        _say("Koi input nahi mila. Kripya dobara call karein.", "hi", base),
+        _say("Koi input nahi mila. Kripya dobara call karein.", "hi"),
         '  <Hangup/>',
     ])
     return _twiml(body)
@@ -163,14 +148,11 @@ async def twilio_gather_lang(request: Request):
 
     body = "\n".join([
         f'  <Gather numDigits="1" action="{action}" method="POST" timeout="10">',
-        _say(cfg["role_prompt"], lang, base),
+        _say(cfg["role_prompt"], lang),
         '  </Gather>',
-        _say(cfg["error_msg"], lang, base),
+        _say(cfg["error_msg"], lang),
         '  <Hangup/>',
     ])
-    log.info("Language selected: digit=%s lang=%s", digit, lang)
-    return _twiml(body)
-
     log.info("Language selected: digit=%s lang=%s", digit, lang)
     return _twiml(body)
 

@@ -19,7 +19,7 @@ load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 
 log = logging.getLogger("nhaa.sarvam_tts")
 
-SARVAM_API_KEY = os.getenv("SARVAM_API_KEY", "sk_xxi4q8ue_3nbht033GT3IAYEAHX09ss54")
+SARVAM_API_KEY = os.getenv("SARVAM_API_KEY", "")
 SARVAM_TTS_URL = "https://api.sarvam.ai/text-to-speech"
 TTS_CACHE_DIR = Path("uploads/tts_cache")
 
