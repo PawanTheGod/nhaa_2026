@@ -27,8 +27,10 @@ from fastapi.responses import Response, JSONResponse
 from pydantic import BaseModel
 import httpx
 
+from urllib.parse import quote_plus
 from app.services.calls.orchestrator import process_transcript_to_case
 from app.services.stt.deepgram_client import transcribe_bytes, DEEPGRAM_API_KEY
+from app.services.tts.sarvam_tts import generate_sarvam_speech
 from app.database import AsyncSessionLocal
 from app.routes.websocket import ws_manager
 
@@ -93,7 +95,6 @@ IVRS = {
         "informer_label": "mahiti_denara",
         "error_msg": "Maafi aahe, ek chook zhaali. Krupaya parat call kara.",
     },
-
 }
 
 LANG_DIGIT_MAP = {"1": "en", "2": "hi", "3": "mr"}
@@ -107,9 +108,28 @@ def _twiml(content: str) -> Response:
     )
 
 
-def _say(text: str, lang_code: str = "en") -> str:
-    cfg = IVRS[lang_code]
-    return f'  <Say voice="{cfg["tts_voice"]}" language="{cfg["tts_lang"]}">{text}</Say>'
+def _say(text: str, lang_code: str = "en", base_url: str = "") -> str:
+    """
+    Renders high-fidelity Indian audio using Sarvam AI via <Play>, with <Say> fallback.
+    """
+    cfg = IVRS.get(lang_code, IVRS["en"])
+    fallback = f'<Say voice="{cfg["tts_voice"]}" language="{cfg["tts_lang"]}">{text}</Say>'
+    if base_url:
+        encoded_text = quote_plus(text)
+        play_url = f"{base_url}/twilio/tts?lang={lang_code}&amp;text={encoded_text}"
+        return f'    <Play>{play_url}</Play>\n    {fallback}'
+    return f'    {fallback}'
+
+
+@router.get("/twilio/tts")
+async def serve_sarvam_tts_audio(text: str, lang: str = "hi"):
+    """
+    Endpoint called by Twilio <Play> to stream high-fidelity Sarvam Indian TTS audio.
+    """
+    audio_bytes = await generate_sarvam_speech(text, language=lang)
+    if not audio_bytes:
+        raise HTTPException(status_code=500, detail="Sarvam TTS generation failed")
+    return Response(content=audio_bytes, media_type="audio/wav")
 
 
 # ─── Step 1: Language selection ──────────────────────────────────────────────
@@ -120,11 +140,11 @@ async def twilio_voice(request: Request):
 
     body = "\n".join([
         f'  <Gather numDigits="1" action="{action}" method="POST" timeout="10">',
-        '    <Say voice="Polly.Aditi" language="en-IN">Welcome to the National Helpline Against Atrocities. Press 1 for English.</Say>',
-        '    <Say voice="Polly.Aditi" language="hi-IN">Rashtriya Atyachar Virodhi Helpline mein aapka swagat hai. Hindi ke liye 2 dabayen.</Say>',
-        '    <Say voice="Polly.Aditi" language="mr-IN">Rashtriya Atyachar Virodhi Helpline madhe swagat aahe. Marathi sathi 3 daba.</Say>',
+        _say("Welcome to the National Helpline Against Atrocities. Press 1 for English.", "en", base),
+        _say("Rashtriya Atyachar Virodhi Helpline mein aapka swagat hai. Hindi ke liye 2 dabayen.", "hi", base),
+        _say("Rashtriya Atyachar Virodhi Helpline madhe swagat aahe. Marathi sathi 3 daba.", "mr", base),
         '  </Gather>',
-        '  <Say voice="Polly.Aditi" language="hi-IN">Koi input nahi mila. Kripya dobara call karein.</Say>',
+        _say("Koi input nahi mila. Kripya dobara call karein.", "hi", base),
         '  <Hangup/>',
     ])
     return _twiml(body)
@@ -136,18 +156,21 @@ async def twilio_gather_lang(request: Request):
     form = await request.form()
     digit = form.get("Digits", "").strip()
     lang = LANG_DIGIT_MAP.get(digit, "hi")
-    cfg = IVRS[lang]
+    cfg = IVRS.get(lang, IVRS["hi"])
 
     base = str(request.base_url).rstrip("/")
     action = f"{base}/twilio/gather-role?lang={lang}"
 
     body = "\n".join([
         f'  <Gather numDigits="1" action="{action}" method="POST" timeout="10">',
-        _say(cfg["role_prompt"], lang),
+        _say(cfg["role_prompt"], lang, base),
         '  </Gather>',
-        _say(cfg["error_msg"], lang),
+        _say(cfg["error_msg"], lang, base),
         '  <Hangup/>',
     ])
+    log.info("Language selected: digit=%s lang=%s", digit, lang)
+    return _twiml(body)
+
     log.info("Language selected: digit=%s lang=%s", digit, lang)
     return _twiml(body)
 
@@ -197,9 +220,9 @@ async def twilio_gather_role(request: Request):
         f'  <Gather input="speech" action="{action}" method="POST" '
         f'language="{speech_lang}" speechTimeout="5" timeout="60" '
         f'finishOnKey="#">',
-        _say(prompt_text, lang),
+        _say(prompt_text, lang, base),
         '  </Gather>',
-        _say(cfg["error_msg"], lang),
+        _say(cfg["error_msg"], lang, base),
         '  <Hangup/>',
     ])
     return _twiml(body)
@@ -233,6 +256,7 @@ async def twilio_speech_done(request: Request):
     Twilio sends SpeechResult (the transcript) directly.
     We create the case from the transcript and speak the acknowledgment.
     """
+    base = str(request.base_url).rstrip("/")
     form = {}
     if request.method == "POST":
         try:
@@ -269,7 +293,7 @@ async def twilio_speech_done(request: Request):
     # Always play the spoken acknowledgment
     msg = ACK_MESSAGES.get(lang, ACK_MESSAGES["hi"])
     body = "\n".join([
-        _say(msg, lang),
+        _say(msg, lang, base),
         '  <Pause length="2"/>',
         '  <Hangup/>',
     ])
@@ -279,10 +303,11 @@ async def twilio_speech_done(request: Request):
 # ─── Legacy record-done (kept for backward compatibility) ────────────────────
 @router.api_route("/twilio/record-done", methods=["GET", "POST"])
 async def twilio_record_done(request: Request):
+    base = str(request.base_url).rstrip("/")
     lang = request.query_params.get("lang") or "hi"
     msg = ACK_MESSAGES.get(lang, ACK_MESSAGES["hi"])
     body = "\n".join([
-        _say(msg, lang),
+        _say(msg, lang, base),
         '  <Pause length="2"/>',
         '  <Hangup/>',
     ])

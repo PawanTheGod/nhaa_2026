@@ -1,32 +1,63 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  Headphones,
+  Search,
+  Shield,
+  ShieldAlert,
+  Award,
+  Building2,
+  Scale,
+  HeartHandshake,
+  Menu,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  Radio,
+  UserCheck,
+  CheckCircle2,
+} from 'lucide-react';
 import { ASSETS } from '../../assets';
 import { getSession, clearSession, ROLE_LABELS } from '../../utils/adminAuth';
 import { useLang } from '../../i18n/LangContext';
 import { ADMIN_TRANSLATIONS } from '../../i18n/adminTranslations';
 
 const RANK_CONFIG = {
-  operator: { code: 'L-0', label: 'Call Centre Operator', jurisdiction: 'Triage Queue' },
-  dsp:      { code: 'L-1', label: 'Deputy Superintendent of Police (DSP)', jurisdiction: 'District Operations' },
-  sp:       { code: 'L-2', label: 'Superintendent of Police (SP)', jurisdiction: 'State Command' },
-  ig:       { code: 'L-3', label: 'Inspector General of Police (IG)', jurisdiction: 'National Intelligence' },
+  operator:  { code: 'L-0',   label: 'Call Centre Operator', jurisdiction: 'Triage Queue & Intake', Icon: Headphones },
+  io:        { code: 'L-0.5', label: 'Investigating Officer (IO)', jurisdiction: 'Ground Investigation & Scene Log', Icon: Search },
+  dsp:       { code: 'L-1',   label: 'Deputy SP (DSP)', jurisdiction: 'District Operations & Supervisory', Icon: Shield },
+  acp:       { code: 'L-1',   label: 'Asst. Commissioner (ACP)', jurisdiction: 'Zonal Field Command & Scrutiny', Icon: ShieldAlert },
+  sp:        { code: 'L-2',   label: 'Superintendent of Police (SP)', jurisdiction: 'District/State Command & Case Lock', Icon: Award },
+  ig:        { code: 'L-3',   label: 'Inspector General (IG)', jurisdiction: 'State Zone Strategic Review', Icon: Award },
+  director:  { code: 'L-3+',  label: 'Director (Central Oversight)', jurisdiction: 'Apex Cross-Tier Performance', Icon: Building2 },
+  judiciary: { code: 'L-4',   label: 'Judiciary / Legal Authority', jurisdiction: 'Audit Trail & SWO Directives', Icon: Scale },
+  swo:       { code: 'L-5',   label: 'Social Welfare Officer (SWO)', jurisdiction: 'Victim Rehabilitation & Schemes', Icon: HeartHandshake },
 };
 
 const ADMIN_NAV = [
-  { label: 'Operator Desk',  path: '/admin/operator', code: 'L-0', desc: 'Call Centre & AI Triage Queue', roles: ['operator'] },
-  { label: 'DSP Command',    path: '/admin/dsp',      code: 'L-1', desc: 'District Field Operations & Inquiry', roles: ['dsp', 'operator'] },
-  { label: 'SP Oversight',   path: '/admin/sp',       code: 'L-2', desc: 'State Supervisory & Escalation Command', roles: ['sp', 'dsp'] },
-  { label: 'IG Intelligence',path: '/admin/ig',       code: 'L-3', desc: 'National Overview & Apex Review', roles: ['ig', 'sp'] },
+  { label: 'Operator Desk',     path: '/admin/operator',  code: 'L-0',   Icon: Headphones, desc: 'Call Centre & AI Triage Queue', roles: ['operator', 'director'] },
+  { label: 'IO Field Ops',      path: '/admin/io',        code: 'L-0.5', Icon: Search, desc: 'Ground Investigation, Site Log & Evidence', roles: ['io', 'operator', 'director'] },
+  { label: 'ACP Command',       path: '/admin/acp',       code: 'L-1',   Icon: ShieldAlert, desc: 'Case Scrutiny, Evidence Inspection & Forwarding', roles: ['acp', 'dsp', 'director'] },
+  { label: 'DSP Operations',    path: '/admin/dsp',       code: 'L-1',   Icon: Shield, desc: 'District Field Operations & Inquiry', roles: ['dsp', 'acp', 'director'] },
+  { label: 'SP Oversight',      path: '/admin/sp',        code: 'L-2',   Icon: Award, desc: 'Delay Alert System & Case Lock to Judiciary', roles: ['sp', 'director'] },
+  { label: 'IG Intelligence',   path: '/admin/ig',        code: 'L-3',   Icon: Award, desc: 'National Overview & Apex Review', roles: ['ig', 'director'] },
+  { label: 'Director Control',  path: '/admin/director',  code: 'L-3+',  Icon: Building2, desc: 'Full-Tier Performance & Aggregate KPIs', roles: ['director', 'ig'] },
+  { label: 'Judiciary Review',  path: '/admin/judiciary', code: 'L-4',   Icon: Scale, desc: 'Audit Trail Scrutiny & Directives to SWO', roles: ['judiciary', 'director'] },
+  { label: 'SWO Rehabilitation',path: '/admin/swo',        code: 'L-5',   Icon: HeartHandshake, desc: 'Victim Rehabilitation & Welfare Tracking', roles: ['swo', 'director'] },
 ];
 
 function navVisible(item, role) {
   if (!role) return true;
-  return item.roles.includes(role) || role === 'ig';
+  if (role === 'ig' || role === 'director' || role === 'super_admin') return true;
+  return item.roles.includes(role);
 }
 
 function Clock() {
   const [time, setTime] = useState(new Date());
-  useEffect(() => { const t = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(t); }, []);
+  useEffect(() => {
+    const t = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
   return (
     <span style={{ fontFamily: 'monospace', fontSize: 12, color: '#FFFFFF', fontWeight: 600 }}>
       {time.toLocaleTimeString('en-IN', { hour12: false })} IST
@@ -38,37 +69,55 @@ export default function AdminLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const session = getSession();
-  const role = session?.role;
+  const role = session?.role || 'dsp';
   const { lang } = useLang();
   const at = ADMIN_TRANSLATIONS[lang] || ADMIN_TRANSLATIONS.en;
   const current = ADMIN_NAV.find((n) => n.path === location.pathname);
   const rank = RANK_CONFIG[role] || RANK_CONFIG.dsp;
+  const RankIcon = rank.Icon || Shield;
+
+  const [collapsed, setCollapsed] = useState(() => {
+    const saved = localStorage.getItem('nhaa_admin_sidebar_collapsed');
+    return saved === 'true';
+  });
+
+  const toggleSidebar = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('nhaa_admin_sidebar_collapsed', String(next));
+      return next;
+    });
+  };
 
   const handleLogout = () => {
     clearSession();
     navigate('/admin/login');
   };
 
+  const sidebarWidth = collapsed ? 72 : 270;
+
   return (
     <div style={{
       background: '#F8FAFC',
       color: '#0F172A',
-      fontFamily: "'Inter', 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      fontFamily: "'Noto Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      WebkitFontSmoothing: 'antialiased',
+      MozOsxFontSmoothing: 'grayscale',
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
     }}>
-      {/* ── 1. Top Utility Bar (Matching Homepage) ── */}
+      {/* Top Utility Bar */}
       <div style={{
-        background: '#003366',
+        background: '#0F1E36',
         color: '#FFFFFF',
         fontSize: 12,
         padding: '6px 0',
-        borderBottom: '2px solid #FF9933',
+        borderBottom: '2px solid rgb(0, 115, 230)',
+        zIndex: 110,
       }}>
         <div style={{
-          maxWidth: 1440,
-          margin: '0 auto',
+          maxWidth: '100%',
           padding: '0 24px',
           display: 'flex',
           alignItems: 'center',
@@ -76,7 +125,7 @@ export default function AdminLayout({ children }) {
           flexWrap: 'wrap',
           gap: 12,
         }}>
-          {/* Left: Indian Flag & Official Government Declaration */}
+          {/* Left: Flag & Official Government Declaration */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <img
               src={ASSETS.indianFlag}
@@ -84,8 +133,8 @@ export default function AdminLayout({ children }) {
               style={{ height: 13, width: 20, objectFit: 'cover', borderRadius: 2 }}
               onError={(e) => { e.target.style.display = 'none'; }}
             />
-            <span style={{ fontWeight: 600, letterSpacing: '0.02em' }}>
-              Government of India &nbsp;|&nbsp; Ministry of Social Justice &amp; Empowerment
+            <span style={{ fontWeight: 600, letterSpacing: '0.02em', fontSize: 11 }}>
+              Government of India &nbsp;|&nbsp; Ministry of Social Justice &amp; Empowerment &bull; State of Maharashtra
             </span>
           </div>
 
@@ -107,205 +156,352 @@ export default function AdminLayout({ children }) {
               letterSpacing: '0.04em',
             }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
-              IVRS Telephony Active: 14566
+              IVRS 14566 TOLL-FREE ACTIVE
             </span>
             <Link
               to="/"
               style={{
-                color: '#93C5FD',
+                color: '#60A5FA',
                 textDecoration: 'none',
                 fontSize: 12,
                 fontWeight: 600,
               }}
             >
-              Public Portal
+              Public Portal &rarr;
             </Link>
           </div>
         </div>
       </div>
 
-      {/* ── 2. Official Main Header Bar (Matching Homepage Layout) ── */}
+      {/* Official Main Header Bar */}
       <header style={{
         background: '#FFFFFF',
         borderBottom: '1px solid #E2E8F0',
-        padding: '12px 0',
+        padding: '10px 24px',
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
       }}>
-        <div style={{
-          maxWidth: 1440,
-          margin: '0 auto',
-          padding: '0 24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 20,
-          flexWrap: 'wrap',
-        }}>
-          {/* Left: National Emblem + Ministry Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {/* Collapse Toggle Button */}
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            title={collapsed ? "Expand Sidebar Navigation" : "Collapse Sidebar Navigation"}
+            style={{
+              background: '#F8FAFC',
+              border: '1.5px solid #CBD5E1',
+              borderRadius: 6,
+              width: 36,
+              height: 36,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'rgb(0, 115, 230)',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#F0F7FF'; e.currentTarget.style.borderColor = 'rgb(0, 115, 230)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.borderColor = '#CBD5E1'; }}
+          >
+            {collapsed ? <Menu size={18} /> : <ChevronLeft size={18} />}
+          </button>
+
+          {/* National Emblem + Portal Title */}
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 14, textDecoration: 'none' }}>
             <img
               src={ASSETS.nationalEmblem}
-              alt="National Emblem of India"
-              style={{ height: 54, width: 'auto' }}
+              alt="National Emblem"
+              style={{ height: 44, width: 'auto' }}
               onError={(e) => { e.target.src = `${import.meta.env.BASE_URL}ashoka_emblem.jpg`; }}
             />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{
-                  background: '#FF9900',
-                  color: '#000000',
+                  background: 'rgb(0, 115, 230)',
+                  color: '#FFFFFF',
                   fontSize: 9,
-                  fontWeight: 800,
-                  padding: '1px 6px',
+                  fontWeight: 900,
+                  padding: '2px 7px',
                   borderRadius: 3,
                   letterSpacing: '0.5px',
                 }}>
-                  OFFICIAL
+                  LAW ENFORCEMENT COMMAND
                 </span>
                 <span style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>
-                  Government of India
+                  Government of Maharashtra &bull; Home Department
                 </span>
               </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', lineHeight: 1.2 }}>
-                Ministry of Social Justice &amp; Empowerment
-              </div>
-              <div style={{ fontSize: 17, fontWeight: 900, color: '#003366', letterSpacing: '-0.01em', lineHeight: 1.25 }}>
-                National Helpline Against Atrocities (NHAA) &mdash; Law Enforcement Command
+              <div style={{ fontSize: 15, fontWeight: 900, color: '#0F172A', letterSpacing: '-0.01em', lineHeight: 1.25 }}>
+                National Helpline Against Atrocities (14566) &mdash; Pune District Command Desk
               </div>
             </div>
           </Link>
+        </div>
 
-          {/* Right: Digital India Logo + Officer Profile Box */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <img
-              src={ASSETS.digitalIndia}
-              alt="Digital India"
-              style={{ height: 38, width: 'auto' }}
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
-
+        {/* Right Officer Status & Sign Out */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            background: '#F8FAFC',
+            border: '1.5px solid #CBD5E1',
+            padding: '6px 14px',
+            borderRadius: 6,
+          }}>
             <div style={{
+              width: 32,
+              height: 32,
+              borderRadius: 6,
+              background: 'rgb(0, 115, 230)',
+              color: '#FFFFFF',
               display: 'flex',
               alignItems: 'center',
-              gap: 12,
-              background: '#F8FAFC',
-              border: '1px solid #CBD5E1',
-              padding: '6px 14px',
-              borderRadius: 6,
+              justifyContent: 'center',
             }}>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A', lineHeight: 1.2 }}>
-                  {session?.name || ROLE_LABELS[role] || 'Designated Officer'}
-                </div>
-                <div style={{ fontSize: 11, color: '#003366', fontWeight: 700, marginTop: 2 }}>
-                  {rank.code}: {rank.label}
-                  {session?.district ? ` | ${session.district}` : ''}
-                </div>
+              <RankIcon size={16} />
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: '#0F172A', lineHeight: 1.2 }}>
+                {session?.name || 'DySP Rajesh Shinde'}
               </div>
-              <button
-                type="button"
-                onClick={handleLogout}
-                style={{
-                  background: '#FFFFFF',
-                  color: '#DC2626',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  padding: '6px 12px',
-                  borderRadius: 4,
-                  border: '1px solid #FECACA',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
-                onMouseEnter={(e) => { e.target.style.background = '#FEF2F2'; }}
-                onMouseLeave={(e) => { e.target.style.background = '#FFFFFF'; }}
-              >
-                Sign Out
-              </button>
+              <div style={{ fontSize: 11, color: 'rgb(0, 115, 230)', fontWeight: 800, marginTop: 1 }}>
+                {rank.code}: {rank.label} &bull; Pune District
+              </div>
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            style={{
+              background: '#FFFFFF',
+              color: '#DC2626',
+              fontSize: 11,
+              fontWeight: 700,
+              padding: '7px 14px',
+              borderRadius: 5,
+              border: '1.5px solid #FECACA',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#FEF2F2'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#FFFFFF'; }}
+          >
+            <LogOut size={13} />
+            Sign Out
+          </button>
         </div>
       </header>
 
-      {/* ── 3. Government Hierarchy Navigation Tabs (Matching Home Navigation Bar) ── */}
-      <nav style={{
-        background: '#FFFFFF',
-        borderBottom: '2px solid #003366',
-        position: 'sticky',
-        top: '78px',
-        zIndex: 90,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-      }} aria-label="Police Command Navigation">
-        <div style={{ maxWidth: 1440, margin: '0 auto', padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto' }}>
-          {ADMIN_NAV.filter((item) => navVisible(item, role)).map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '12px 18px',
-                  fontSize: 13,
-                  fontWeight: isActive ? 800 : 600,
-                  color: isActive ? '#003366' : '#475569',
-                  borderBottom: isActive ? '3px solid #003366' : '3px solid transparent',
-                  background: isActive ? '#EFF6FF' : 'transparent',
-                  textDecoration: 'none',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span style={{
-                  fontSize: 10,
-                  fontWeight: 800,
-                  padding: '2px 6px',
-                  borderRadius: 3,
-                  background: isActive ? '#003366' : '#E2E8F0',
-                  color: isActive ? '#FFFFFF' : '#475569',
-                }}>
-                  {item.code}
-                </span>
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
-
-      {/* ── 4. Main Desk Title Bar ── */}
-      <div style={{ maxWidth: 1440, margin: '0 auto', width: '100%', padding: '20px 24px 0', boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#003366', marginBottom: 2 }}>
-              Police Command &amp; Supervisory Network &mdash; Ministry of Social Justice &amp; Empowerment
-            </div>
-            <h1 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.01em' }}>
-              {current?.label || 'Officer'} Desk
-            </h1>
-            {current?.desc && <p style={{ fontSize: 12, color: '#64748B', margin: '3px 0 0', fontWeight: 500 }}>{current.desc}</p>}
-          </div>
-
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#64748B' }}>Jurisdiction Status:</span>
-            <span style={{
-              fontSize: 11, fontWeight: 800, color: '#065F46', background: '#D1FAE5',
-              padding: '3px 10px', borderRadius: 4, border: '1px solid #A7F3D0',
+      {/* Main Workspace with Collapsible Sidebar */}
+      <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
+        {/* Left Collapsible Sidebar with Clean White Background */}
+        <aside
+          style={{
+            width: sidebarWidth,
+            minWidth: sidebarWidth,
+            background: '#FFFFFF',
+            color: '#0F172A',
+            borderRight: '1px solid #E2E8F0',
+            transition: 'width 0.2s ease, min-width 0.2s ease',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            boxShadow: '2px 0 10px rgba(0,0,0,0.03)',
+            zIndex: 90,
+            overflowX: 'hidden',
+          }}
+        >
+          {/* Top Section: Navigation Items */}
+          <div style={{ padding: '16px 10px' }}>
+            <div style={{
+              padding: collapsed ? '0 4px 12px' : '0 10px 12px',
+              borderBottom: '1px solid #F1F5F9',
+              marginBottom: 12,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: collapsed ? 'center' : 'space-between',
             }}>
-              Connected to Central Repository
-            </span>
+              {!collapsed && (
+                <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#64748B' }}>
+                  Hierarchy Desks
+                </span>
+              )}
+              <span style={{
+                fontSize: 9,
+                fontWeight: 900,
+                background: '#FF9933',
+                color: '#000000',
+                padding: '2px 6px',
+                borderRadius: 4,
+              }}>
+                9 TIERS
+              </span>
+            </div>
+
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              {ADMIN_NAV.filter((item) => navVisible(item, role)).map((item) => {
+                const isActive = location.pathname === item.path;
+                const ItemIcon = item.Icon;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    title={collapsed ? `${item.code} - ${item.label}: ${item.desc}` : undefined}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: collapsed ? '12px 0' : '10px 12px',
+                      justifyContent: collapsed ? 'center' : 'flex-start',
+                      borderRadius: 8,
+                      fontSize: 13,
+                      fontWeight: isActive ? 800 : 600,
+                      color: isActive ? '#FFFFFF' : '#334155',
+                      background: isActive ? 'rgb(0, 115, 230)' : 'transparent',
+                      border: isActive ? '1px solid rgb(0, 115, 230)' : '1px solid transparent',
+                      boxShadow: isActive ? '0 4px 12px rgba(0, 115, 230, 0.22)' : 'none',
+                      textDecoration: 'none',
+                      transition: 'all 0.15s ease',
+                      whiteSpace: 'nowrap',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = '#F0F7FF';
+                        e.currentTarget.style.borderColor = '#BFDBFE';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.borderColor = 'transparent';
+                      }
+                    }}
+                  >
+                    <span style={{ minWidth: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <ItemIcon size={17} color={isActive ? '#FFFFFF' : '#64748B'} />
+                    </span>
+
+                    {!collapsed && (
+                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ color: isActive ? '#FFFFFF' : '#0F172A', fontSize: 13, fontWeight: isActive ? 800 : 700, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {item.label}
+                          </span>
+                          <span style={{
+                            fontSize: 9,
+                            fontWeight: 800,
+                            padding: '2px 5px',
+                            borderRadius: 4,
+                            background: isActive ? 'rgba(255,255,255,0.25)' : '#F1F5F9',
+                            color: isActive ? '#FFFFFF' : '#475569',
+                            marginLeft: 6,
+                          }}>
+                            {item.code}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: 10, color: isActive ? '#E0F2FE' : '#64748B', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {item.desc}
+                        </span>
+                      </div>
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
           </div>
+
+          {/* Bottom Section: Jurisdictional Status & Quick Links */}
+          <div style={{
+            padding: '14px',
+            borderTop: '1px solid #E2E8F0',
+            background: '#F8FAFC',
+          }}>
+            {!collapsed ? (
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: 4 }}>
+                  Jurisdiction Scope
+                </div>
+                <div style={{ fontSize: 11, color: '#0F172A', fontWeight: 700 }}>
+                  Pune District &bull; Maharashtra Zone
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981' }} />
+                  <span style={{ fontSize: 10, color: '#047857', fontWeight: 800 }}>Encrypted NIC-Gov Channel</span>
+                </div>
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center' }} title="Encrypted Connection Online">
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+              </div>
+            )}
+          </div>
+        </aside>
+
+        {/* Right Content Area */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+          {/* Breadcrumb Navigation Bar */}
+          <div style={{
+            background: '#FFFFFF',
+            borderBottom: '1px solid #E2E8F0',
+            padding: '10px 24px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#64748B' }}>
+              <span style={{ fontWeight: 600 }}>Home</span>
+              <span>/</span>
+              <span style={{ fontWeight: 600 }}>Command Hierarchy</span>
+              <span>/</span>
+              <span style={{ fontWeight: 800, color: 'rgb(0, 115, 230)' }}>{current?.label || 'Officer Desk'}</span>
+              <span style={{
+                fontSize: 10,
+                fontWeight: 800,
+                background: 'rgb(0, 115, 230)',
+                color: '#FFFFFF',
+                padding: '2px 7px',
+                borderRadius: 4,
+              }}>
+                {current?.code || rank.code}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#64748B' }}>Command Jurisdiction:</span>
+              <span style={{
+                fontSize: 11, fontWeight: 800, color: '#065F46', background: '#D1FAE5',
+                padding: '3px 10px', borderRadius: 4, border: '1px solid #A7F3D0',
+              }}>
+                Pune District, Maharashtra &bull; Level {rank.code}
+              </span>
+            </div>
+          </div>
+
+          {/* Main Content Workspace */}
+          <main style={{
+            flex: 1,
+            padding: '24px',
+            boxSizing: 'border-box',
+            maxWidth: 1600,
+            width: '100%',
+            margin: '0 auto',
+          }}>
+            {children}
+          </main>
         </div>
       </div>
-
-      {/* ── 5. Main Content Workspace ── */}
-      <main style={{ flex: 1, maxWidth: 1440, margin: '0 auto', width: '100%', padding: '20px 24px 48px', boxSizing: 'border-box' }}>
-        {children}
-      </main>
     </div>
   );
 }

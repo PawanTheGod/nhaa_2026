@@ -60,6 +60,13 @@ class CaseBase(BaseModel):
     is_silent_signal: bool = False
     victim_id: Optional[int] = None
     assigned_officer_id: Optional[int] = None
+    # ── New case examine fields ────────────────────────────────────────────
+    person_name: Optional[str] = None
+    incident_location: Optional[str] = None
+    person_assaulted_date: Optional[datetime] = None
+    date_of_report: Optional[datetime] = None
+    exit_report: Optional[str] = None
+    case_summary: Optional[str] = None
 
 
 class CaseCreate(CaseBase):
@@ -75,6 +82,13 @@ class CaseUpdate(BaseModel):
     svi_score: Optional[float] = None
     risk_tier: Optional[RiskTier] = None
     recommended_action: Optional[str] = None
+    # ── New updatable fields ───────────────────────────────────────────────
+    person_name: Optional[str] = None
+    incident_location: Optional[str] = None
+    person_assaulted_date: Optional[datetime] = None
+    date_of_report: Optional[datetime] = None
+    exit_report: Optional[str] = None
+    case_summary: Optional[str] = None
 
 
 class RiskAssessmentMini(BaseModel):
@@ -98,6 +112,9 @@ class CaseOut(CaseBase):
     risk_tier: Optional[RiskTier] = None
     recommended_action: Optional[str] = None
     current_level: Optional[int] = None
+    is_locked: bool = False
+    forwarded_to_swo: bool = False
+    judiciary_directive: Optional[str] = None
     risk_assessments: list[RiskAssessmentMini] = []
 
 
@@ -146,3 +163,64 @@ class OfficerOut(BaseModel):
     role: OfficerRole
     district: Optional[str]
     state: Optional[str]
+
+
+# ── Evidence Schemas ──────────────────────────────────────────────────────────
+
+class EvidenceOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    case_id: int
+    uploaded_by: Optional[int] = None
+    file_name: str
+    file_path: str
+    file_type: Optional[str] = None
+    file_size: Optional[int] = None
+    description: Optional[str] = None
+    tier_level: Optional[str] = None
+    uploaded_at: datetime
+
+
+# ── Handoff Schemas ───────────────────────────────────────────────────────────
+
+class HandoffCreate(BaseModel):
+    to_tier: str
+    to_officer_id: Optional[int] = None
+    handoff_notes: Optional[str] = None
+
+
+class HandoffOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    case_id: int
+    from_officer_id: Optional[int] = None
+    to_officer_id: Optional[int] = None
+    from_tier: Optional[str] = None
+    to_tier: Optional[str] = None
+    handoff_notes: Optional[str] = None
+    created_at: datetime
+
+
+# ── Case Lock / Judiciary Forward Schemas ─────────────────────────────────────
+
+class CaseLockIn(BaseModel):
+    notes: Optional[str] = None
+
+
+class JudiciaryForwardIn(BaseModel):
+    directive: str
+    notes: Optional[str] = None
+
+
+class CaseExamineUpdate(BaseModel):
+    """PATCH payload for updating case examination fields."""
+    person_name: Optional[str] = None
+    incident_location: Optional[str] = None
+    person_assaulted_date: Optional[datetime] = None
+    date_of_report: Optional[datetime] = None
+    exit_report: Optional[str] = None
+    case_summary: Optional[str] = None
+    incident_description: Optional[str] = None
+

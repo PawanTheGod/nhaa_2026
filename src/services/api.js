@@ -130,6 +130,96 @@ export async function updateCase(caseId, patchData, opts = {}) {
 }
 
 /**
+ * PATCH /api/cases/{id}/examine — update examination fields (victim name, location, dates, exit report, etc.)
+ */
+export async function updateCaseExamine(caseId, examineData) {
+  return request(`/cases/${caseId}/examine`, {
+    method: 'PATCH',
+    body: JSON.stringify(examineData),
+  });
+}
+
+/**
+ * POST /api/cases/{id}/evidence — upload multipart evidence files
+ */
+export async function uploadEvidence(caseId, formData) {
+  const url = `${API_BASE}/cases/${caseId}/evidence`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+    },
+    body: formData,
+  });
+  if (resp.status === 401) {
+    clearSession();
+  }
+  if (!resp.ok) {
+    const err = await resp.text().catch(() => '');
+    throw new Error(`Upload failed (${resp.status}): ${err || resp.statusText}`);
+  }
+  return resp.json();
+}
+
+/**
+ * GET /api/cases/{id}/evidence — list evidence items
+ */
+export async function listCaseEvidence(caseId) {
+  return request(`/cases/${caseId}/evidence`);
+}
+
+/**
+ * DELETE /api/evidence/{id} — delete evidence
+ */
+export async function deleteEvidence(evidenceId) {
+  return request(`/evidence/${evidenceId}`, { method: 'DELETE' });
+}
+
+/**
+ * POST /api/cases/{id}/handoff — perform tier transfer
+ */
+export async function createHandoff(caseId, { to_tier, to_officer_id, handoff_notes }) {
+  return request(`/cases/${caseId}/handoff`, {
+    method: 'POST',
+    body: JSON.stringify({ to_tier, to_officer_id, handoff_notes }),
+  });
+}
+
+/**
+ * GET /api/cases/{id}/handoffs — list case handoffs audit trail
+ */
+export async function listHandoffs(caseId) {
+  return request(`/cases/${caseId}/handoffs`);
+}
+
+/**
+ * POST /api/cases/{id}/lock — SP locks case before judiciary review
+ */
+export async function lockCase(caseId, notes = '') {
+  return request(`/cases/${caseId}/lock`, {
+    method: 'POST',
+    body: JSON.stringify({ notes }),
+  });
+}
+
+/**
+ * POST /api/cases/{id}/unlock — Unlock case
+ */
+export async function unlockCase(caseId) {
+  return request(`/cases/${caseId}/unlock`, { method: 'POST' });
+}
+
+/**
+ * POST /api/cases/{id}/forward-to-swo — Judiciary forwards directive to SWO
+ */
+export async function forwardToSWO(caseId, directive, notes = '') {
+  return request(`/cases/${caseId}/forward-to-swo`, {
+    method: 'POST',
+    body: JSON.stringify({ directive, notes }),
+  });
+}
+
+/**
  * POST /risk-assessments — called by AI module.
  */
 export async function createRiskAssessment(raData, actor = 'ai_module') {

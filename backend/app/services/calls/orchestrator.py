@@ -1,5 +1,6 @@
 """
-Call orchestrator: text transcript -> risk flags -> tier -> auto-create case -> broadcast.
+Call orchestrator: text transcript -> Groq entity extraction (name, location, summary)
+-> risk flags -> tier -> auto-create case -> broadcast.
 
 Used by:
   - Twilio webhook (real phone call)
@@ -7,12 +8,13 @@ Used by:
   - /api/calls/transcript endpoint (manual / IVRS test)
 
 Pipeline:
-  1. OpenRouter LLM extracts {flag_name, confidence, signals[]} from raw Hindi/English/etc text
-  2. Aatmman's decision_engine.determine_risk_tier() returns the tier
-  3. POST /api/cases (via create_case_service) saves the case to Supabase
-  4. POST /api/risk-assessments saves the AI assessment
-  5. Broadcast over WebSocket so the operator dashboard updates in real time
-  6. Return the case id + tier for TTS playback
+  1. Groq LLM extracts {person_name, incident_location, case_summary, flags, recommended_action} in <500ms
+  2. Fallback to OpenRouter LLM and keyword flags if needed
+  3. Aatmman's decision_engine.determine_risk_tier() returns the tier
+  4. Save case to PostgreSQL/Supabase with all examination form fields filled
+  5. Save AI Risk Assessment
+  6. Broadcast over WebSocket so the operator dashboard updates in real time
+  7. Return the case id + tier for TTS playback
 """
 from __future__ import annotations
 
@@ -22,15 +24,17 @@ import json
 import logging
 import asyncio
 from typing import Optional
+from datetime import datetime, timezone
 
 import httpx
 
 from app.services.agent.decision_engine import determine_risk_tier
 from app.services.agent.openrouter import OPENROUTER_API_KEY, OPENROUTER_URL, DEFAULT_MODEL
+from app.services.agent.groq_extractor import extract_case_entities_with_groq
 
 log = logging.getLogger("nhaa.calls")
 
-# OpenRouter LLM call: extract risk flags from free-form text (Hindi, English, Tamil, etc.)
+# OpenRouter LLM call: fallback extractor
 EXTRACT_FLAGS_PROMPT = """You are the perception layer of a government helpline AI. Extract risk signals from a victim's complaint.
 
 Output ONLY a JSON array. No prose. No markdown. No ``` fences.
@@ -49,19 +53,12 @@ Flag names (use ONLY these exact strings):
 - "property_damage" - house/property destroyed
 - "documentation" - caste certificate, official documents withheld
 - "economic_exploitation" - wages withheld, bonded labor
-
-Rules:
-- confidence in [0,1] reflecting how strong the evidence is
-- signals[] = exact phrases from the complaint that triggered the flag
-- output [] if complaint is benign
-- support Hindi, Tamil, Telugu, Bengali, Marathi, English
 """
 
 
 async def extract_flags_with_llm(transcript: str) -> list[dict]:
-    """Call OpenRouter to extract structured risk flags from a free-form transcript."""
+    """Call OpenRouter fallback to extract structured risk flags."""
     if not OPENROUTER_API_KEY:
-        log.warning("OPENROUTER_API_KEY missing - returning empty flags")
         return []
 
     payload = {
@@ -79,18 +76,15 @@ async def extract_flags_with_llm(transcript: str) -> list[dict]:
     }
 
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             r = await client.post(OPENROUTER_URL, headers=headers, json=payload)
             r.raise_for_status()
             data = r.json()
             content = data["choices"][0]["message"]["content"].strip()
-            # Strip markdown fences if any
             content = re.sub(r"^```(?:json)?\s*|\s*```$", "", content, flags=re.MULTILINE).strip()
             flags = json.loads(content)
             if not isinstance(flags, list):
-                log.warning("LLM returned non-list: %s", type(flags))
                 return []
-            # Validate each flag
             valid = []
             for f in flags:
                 if not isinstance(f, dict) or "name" not in f:
@@ -100,16 +94,16 @@ async def extract_flags_with_llm(transcript: str) -> list[dict]:
                 f["confidence"] = max(0.0, min(1.0, float(f["confidence"])))
                 valid.append(f)
             return valid
-    except (httpx.HTTPError, json.JSONDecodeError, KeyError, IndexError) as e:
-        log.error("OpenRouter extract_flags failed: %s", e)
+    except Exception as e:
+        log.error("OpenRouter extract_flags fallback error: %s", e)
         return []
 
 
-# ─── Fallback keyword extractor (no LLM required) ───────────────────────────
+# ─── Fallback keyword extractor ──────────────────────────────────────────────
 KEYWORD_FLAGS = {
     "physical_violence": ["mar", "peet", "attack", "maar", "maara", "assault", "beat", "hit", "blood", "khoon", "injury", "chot"],
     "verbal_threat": ["dhamki", "threat", "dhamka", "warned", "intimidate", "dara", "scared", "डरा"],
-    "social_exclusion": ["untouchable", "chheda", "chhut", "boycott", "boycott", "refuse", "gahre pani", "mandir", "temple"],
+    "social_exclusion": ["untouchable", "chheda", "chhut", "boycott", "refuse", "gahre pani", "mandir", "temple"],
     "police_complicity": ["police ne", "FIR nahi", "FIR nahi li", "thana", "police refused", "police collusion", "didn't file"],
     "gender_violence": ["rape", "molest", "harass", "dowry", "dahej", "acid", "eve teasing", "stalk"],
     "child_violence": ["bachcha", "bachchi", "child", "minor", "10 saal", "12 saal", "kid"],
@@ -121,7 +115,6 @@ KEYWORD_FLAGS = {
 
 
 def extract_flags_keyword(transcript: str) -> list[dict]:
-    """Simple keyword-based fallback (works without LLM key, supports English + transliterated Hindi)."""
     text = transcript.lower()
     found = []
     for flag, keywords in KEYWORD_FLAGS.items():
@@ -132,11 +125,7 @@ def extract_flags_keyword(transcript: str) -> list[dict]:
     return found
 
 
-# ─── SVI score estimator (heuristic) ─────────────────────────────────────────
 def estimate_svi(transcript: str, flags: list[dict]) -> float:
-    """Estimate a 0-99.99 SVI score from transcript length + flag count + confidence.
-    Cap at 99.99 to fit NUMERIC(4,2) column on Cases.svi_score / RiskAssessments.svi_score.
-    """
     if not flags:
         return 25.0
     base = 30 + 8 * len(flags)
@@ -145,9 +134,7 @@ def estimate_svi(transcript: str, flags: list[dict]) -> float:
     return min(99.99, base + confidence_bonus + length_bonus)
 
 
-# ─── Channel inference ───────────────────────────────────────────────────────
 def infer_channel(channel: str) -> str:
-    """Map incoming channel string to enum value."""
     ch = channel.lower()
     if "voice" in ch or "twilio" in ch or "phone" in ch or "call" in ch:
         return "ivrs"
@@ -171,49 +158,68 @@ async def process_transcript_to_case(
     extra_meta: Optional[dict] = None,
 ) -> dict:
     """
-    Full pipeline: transcript -> flags -> tier -> case -> broadcast.
-
-    Returns: {case_id, risk_tier, flags, svi_score, transcript, channel, status}
+    Full pipeline: Groq entity extraction (name, location, summary) -> flags -> tier -> case -> broadcast.
     """
     log.info("process_transcript_to_case: %d chars, channel=%s", len(transcript), channel)
 
-    # 1. Extract flags (LLM, fallback to keywords)
-    flags = await extract_flags_with_llm(transcript)
+    meta = extra_meta or {}
+    case_language = meta.get("language", "hi")
+    caller_role = meta.get("caller_role", "unknown")
+
+    # 1. Primary extraction via Groq Cloud (Ultra-fast Llama-3.3 70B)
+    groq_data = await extract_case_entities_with_groq(transcript, language=case_language)
+
+    person_name = groq_data.get("person_name")
+    extracted_location = groq_data.get("incident_location")
+    case_summary = groq_data.get("case_summary")
+    recommended_action = groq_data.get("recommended_action")
+    flags = groq_data.get("flags") or []
+
+    # 2. Fallbacks for flags if Groq didn't extract any
     if not flags:
-        log.info("LLM returned no flags, trying keyword fallback")
+        flags = await extract_flags_with_llm(transcript)
+    if not flags:
         flags = extract_flags_keyword(transcript)
 
-    # 2. Estimate SVI + determine tier via Aatmman's engine
+    # 3. Estimate SVI + determine tier
     svi = estimate_svi(transcript, flags)
     tier = determine_risk_tier(svi, flags)
     tier_value = tier.value if hasattr(tier, "value") else str(tier)
 
-    # 3. Persist to DB
+    resolved_district = district or "Central Delhi"
+    resolved_state = state or "Delhi"
+
+    # If Groq extracted location, refine district if mentioned
+    final_location = extracted_location or (f"{resolved_district}, {resolved_state}")
+
+    # 4. Persist to DB with Examination Fields
     case_id = None
-    ra_id = None
     if db_session_factory is not None:
         try:
             from app.models import Cases, RiskAssessments, RiskTier, CaseStatus, ChannelOrigin
-            from datetime import datetime, timezone
 
             ch_str = infer_channel(channel)
             ch_enum = ChannelOrigin(ch_str) if ch_str in [c.value for c in ChannelOrigin] else ChannelOrigin.ivrs
 
-            meta = extra_meta or {}
-            case_language = meta.get("language", "hi")  # from IVRS language selection
-            caller_role = meta.get("caller_role", "unknown")
+            now_utc = datetime.now(timezone.utc)
 
             async with db_session_factory() as db:
                 case = Cases(
                     channel_of_origin=ch_enum,
-                    district=district or "Central Delhi",
-                    state=state or "Delhi",
-                    incident_description=transcript[:1000],
+                    district=resolved_district,
+                    state=resolved_state,
+                    incident_description=transcript[:1500],
                     language=case_language,
                     status=CaseStatus.new,
                     current_level=0,
                     svi_score=svi,
                     risk_tier=RiskTier(tier_value),
+                    # ── Enriched Groq Extraction Fields ──
+                    person_name=person_name,
+                    incident_location=final_location,
+                    date_of_report=now_utc,
+                    case_summary=case_summary,
+                    recommended_action=recommended_action,
                 )
                 db.add(case)
                 await db.flush()
@@ -225,27 +231,31 @@ async def process_transcript_to_case(
                     risk_tier=RiskTier(tier_value),
                     flags={
                         "_extracted": flags,
-                        "_source": "voice_intake",
+                        "_source": "groq_voice_intake",
                         "_language": case_language,
                         "_caller_role": caller_role,
+                        "_extracted_name": person_name,
+                        "_extracted_location": final_location,
+                        "recommended_action": recommended_action,
                     },
                     explanation_text=(
-                        f"[Voice intake | lang={case_language} | role={caller_role}] "
-                        f"{len(flags)} flags extracted from {len(transcript)}-char transcript."
+                        case_summary
+                        or f"[Voice intake | lang={case_language} | role={caller_role}] "
+                           f"{len(flags)} flags extracted from {len(transcript)}-char transcript."
                     ),
-                    model_version="voice-intake-v1",
+                    model_version="groq-llama3.3-v1",
                 )
                 db.add(ra)
                 await db.commit()
                 log.info(
-                    "Created case #%s with tier=%s svi=%.1f flags=%d lang=%s role=%s",
-                    case_id, tier_value, svi, len(flags), case_language, caller_role,
+                    "Created case #%s with name='%s' location='%s' tier=%s svi=%.1f flags=%d",
+                    case_id, person_name, final_location, tier_value, svi, len(flags),
                 )
         except Exception as e:
-            log.exception("DB write failed: %s", e)
+            log.exception("DB write failed in orchestrator: %s", e)
             case_id = None
 
-    # 4. Broadcast via WebSocket
+    # 5. Broadcast via WebSocket
     if broadcast_websocket is not None and case_id is not None:
         try:
             msg = {
@@ -253,12 +263,15 @@ async def process_transcript_to_case(
                 "data": {
                     "id": case_id,
                     "channel_of_origin": infer_channel(channel),
-                    "district": district,
-                    "state": state,
+                    "district": resolved_district,
+                    "state": resolved_state,
                     "status": "new",
                     "current_level": 0,
                     "svi_score": svi,
                     "risk_tier": tier_value,
+                    "person_name": person_name,
+                    "incident_location": final_location,
+                    "case_summary": case_summary,
                     "incident_description": transcript[:200],
                     "is_silent_signal": any(f.get("name") == "trauma" for f in flags),
                 },
@@ -269,6 +282,10 @@ async def process_transcript_to_case(
 
     return {
         "case_id": case_id,
+        "person_name": person_name,
+        "incident_location": final_location,
+        "case_summary": case_summary,
+        "recommended_action": recommended_action,
         "risk_tier": tier_value,
         "svi_score": svi,
         "flags": flags,

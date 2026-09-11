@@ -21,9 +21,14 @@ RESPONDER_ROLES = set()  # empty — DSP/SP/IG handle cases directly
 
 SUPERVISORY_ROLES = {
     OfficerRole.operator,
+    OfficerRole.io,
     OfficerRole.dsp,
+    OfficerRole.acp,
     OfficerRole.sp,
     OfficerRole.ig,
+    OfficerRole.director,
+    OfficerRole.judiciary,
+    OfficerRole.swo,
 }
 
 
@@ -45,19 +50,25 @@ def require_role(*allowed_roles: str):
     # Expand aliases
     expanded = set(allowed)
     for r in allowed:
-        if r in ("dsp", "district"):
-            expanded.update(["dsp", "district", "nodal"])
+        if r in ("dsp", "district", "acp"):
+            expanded.update(["dsp", "district", "nodal", "acp"])
         elif r in ("sp", "state"):
             expanded.update(["sp", "state"])
-        elif r in ("ig", "ministry", "ministry_admin"):
-            expanded.update(["ig", "ministry", "ministry_admin", "national", "super_admin"])
+        elif r in ("ig", "ministry", "ministry_admin", "director"):
+            expanded.update(["ig", "ministry", "ministry_admin", "national", "super_admin", "director"])
         elif r in ("operator", "call_center"):
             expanded.update(["operator", "call_center"])
+        elif r in ("io", "investigating_officer"):
+            expanded.update(["io", "investigating_officer"])
+        elif r in ("judiciary", "judge"):
+            expanded.update(["judiciary", "judge"])
+        elif r in ("swo", "welfare", "social_welfare"):
+            expanded.update(["swo", "welfare", "social_welfare"])
 
     async def _check(officer: TokenPayload = Depends(get_current_officer)) -> TokenPayload:
         if officer.role not in expanded:
-            # If IG or super_admin, always allow
-            if str(officer.role).lower() in ("ig", "ministry", "ministry_admin", "national", "super_admin"):
+            # If IG, Director, or super_admin, always allow
+            if str(officer.role).lower() in ("ig", "ministry", "ministry_admin", "national", "super_admin", "director"):
                 return officer
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -77,24 +88,25 @@ def enforce_scope(case: Cases, officer: TokenPayload) -> None:
     return
 
 
-
 def build_case_filter(officer: TokenPayload):
     """
     Return a list of SQLAlchemy WHERE clauses to scope a Cases query.
     """
-    from sqlalchemy import and_
-
     role = officer.role
     clauses = []
 
-    if role == OfficerRole.ig.value:
+    if role in (OfficerRole.ig.value, OfficerRole.director.value, OfficerRole.judiciary.value):
         pass  # sees everything
+
+    elif role == OfficerRole.swo.value:
+        # SWO primarily sees cases forwarded to SWO or all active cases in demo
+        pass
 
     elif role == OfficerRole.sp.value:
         if officer.state:
             clauses.append(Cases.state == officer.state)
 
-    elif role in (OfficerRole.dsp.value, OfficerRole.operator.value):
+    elif role in (OfficerRole.dsp.value, OfficerRole.acp.value, OfficerRole.io.value, OfficerRole.operator.value):
         if officer.district:
             clauses.append(
                 (Cases.district == officer.district) | (Cases.district == "Unknown") | (Cases.district.is_(None))

@@ -123,6 +123,25 @@ def _case_list_item(case: Cases) -> dict[str, Any]:
     except Exception:
         pass
 
+    evidence_list = []
+    try:
+        if hasattr(case, "evidence_files") and case.evidence_files:
+            evidence_list = [
+                {
+                    "id": ev.id,
+                    "file_name": ev.file_name,
+                    "file_path": ev.file_path,
+                    "file_type": ev.file_type,
+                    "file_size": ev.file_size,
+                    "description": ev.description,
+                    "tier_level": ev.tier_level,
+                    "uploaded_at": ev.uploaded_at.isoformat() if ev.uploaded_at else None,
+                }
+                for ev in sorted(case.evidence_files, key=lambda x: x.uploaded_at, reverse=True)
+            ]
+    except Exception:
+        pass
+
     return {
         "id": case.id,
         "case_id": case.id,
@@ -144,7 +163,19 @@ def _case_list_item(case: Cases) -> dict[str, Any]:
         "flags": ra.flags if ra else {},
         "explanation_text": ra.explanation_text if ra else None,
         "notifications": notifications,
-
+        # ── Hierarchical Workflow & Case Examination Form Fields ─────────
+        "person_name": getattr(case, "person_name", None),
+        "incident_location": getattr(case, "incident_location", None),
+        "person_assaulted_date": case.person_assaulted_date.isoformat() if getattr(case, "person_assaulted_date", None) else None,
+        "date_of_report": case.date_of_report.isoformat() if getattr(case, "date_of_report", None) else None,
+        "exit_report": getattr(case, "exit_report", None),
+        "case_summary": getattr(case, "case_summary", None),
+        "is_locked": bool(getattr(case, "is_locked", False)),
+        "locked_by": getattr(case, "locked_by", None),
+        "locked_at": case.locked_at.isoformat() if getattr(case, "locked_at", None) else None,
+        "forwarded_to_swo": bool(getattr(case, "forwarded_to_swo", False)),
+        "judiciary_directive": getattr(case, "judiciary_directive", None),
+        "evidence_files": evidence_list,
         "risk_assessments": [
             {
                 "id": r.id,
@@ -164,13 +195,34 @@ def _case_detail(case: Cases) -> dict[str, Any]:
     """Serialise a case for GET /api/cases/{id} — includes full AI fields."""
     base = _case_list_item(case)
     ra = _latest_ra(case)
+    
+    handoffs_list = []
+    try:
+        if hasattr(case, "handoffs") and case.handoffs:
+            handoffs_list = [
+                {
+                    "id": h.id,
+                    "from_officer_id": h.from_officer_id,
+                    "to_officer_id": h.to_officer_id,
+                    "from_tier": h.from_tier,
+                    "to_tier": h.to_tier,
+                    "handoff_notes": h.handoff_notes,
+                    "created_at": h.created_at.isoformat() if h.created_at else None,
+                }
+                for h in sorted(case.handoffs, key=lambda x: x.created_at, reverse=False)
+            ]
+    except Exception:
+        pass
+
     base.update({
         "incident_date": case.incident_date.isoformat() if case.incident_date else None,
         "language": case.language,
         "victim_id": case.victim_id,
         "model_version": ra.model_version if ra else None,
+        "handoffs": handoffs_list,
     })
     return base
+
 
 
 

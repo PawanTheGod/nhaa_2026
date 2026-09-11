@@ -38,6 +38,11 @@ perception-service/.venv/
 perception-service/**/__pycache__/
 perception-service/**/*.pyc
 
+# Uploads & temporary test artifacts
+backend/uploads/
+backend/tests/*.csv
+*.csv
+
 # Environment
 .env
 .env.local

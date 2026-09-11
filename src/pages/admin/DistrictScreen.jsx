@@ -1,4 +1,22 @@
 import React, { useEffect, useState } from 'react';
+import {
+  Shield,
+  Search,
+  Filter,
+  RefreshCw,
+  MapPin,
+  Phone,
+  User,
+  Building2,
+  FileText,
+  FolderOpen,
+  Scale,
+  Clock,
+  ArrowUpRight,
+  AlertTriangle,
+  CheckCircle2,
+  Lock,
+} from 'lucide-react';
 import { listCases, connectWebSocket, getAllowedActions, postCaseAction, getFullCase, getCaseNotifications, confirmOfficerDecision } from '../../services/api';
 import { districtMockData } from '../../data/districtCases';
 import { getSession } from '../../utils/adminAuth';
@@ -10,21 +28,21 @@ import { useLang } from '../../i18n/LangContext';
 import { ADMIN_TRANSLATIONS } from '../../i18n/adminTranslations';
 
 const CHANNEL_LABELS = {
-  portal: 'Public Web Portal',
-  chatbot: 'Chatbot Intake',
-  ivrs: 'Toll-Free IVRS (14566)',
-  voice_twilio: 'Toll-Free IVRS (14566)',
-  mobile_app: 'Mobile Application',
+  portal: 'Web Portal',
+  chatbot: 'Chatbot',
+  ivrs: 'IVRS (14566)',
+  voice_twilio: 'IVRS (14566)',
+  mobile_app: 'Mobile App',
 };
 
 const TIER_ORDER = { critical: 0, high: 1, moderate: 2, low: 3 };
 
-const LEVEL_LABELS = { 0: 'Operator', 1: 'DSP', 2: 'SP', 3: 'IG' };
+const LEVEL_LABELS = { 0: 'Operator', 1: 'DSP (District)', 2: 'SP (State)', 3: 'IG (Apex)' };
 
 const STATUS_BADGE = {
   new:        { bg: '#EFF6FF', fg: '#1E40AF', border: '#BFDBFE', label: 'New Complaint' },
   in_progress:{ bg: '#FFFBEB', fg: '#92400E', border: '#FDE68A', label: 'Under Investigation' },
-  escalated:  { bg: '#FFF7ED', fg: '#9A3412', border: '#FFEDD5', label: 'Escalated' },
+  escalated:  { bg: '#FFF7ED', fg: '#9A3412', border: '#FFEDD5', label: 'Escalated to SP' },
   resolved:   { bg: '#ECFDF5', fg: '#065F46', border: '#A7F3D0', label: 'Disposed / Actioned' },
   closed:     { bg: '#F8FAFC', fg: '#475569', border: '#E2E8F0', label: 'Closed' },
 };
@@ -38,21 +56,32 @@ function apiToCase(apiCase) {
     id: `NHAA-${apiCase.id}`,
     numericId: apiCase.id,
     case_id: apiCase.id,
+    person_name: apiCase.person_name || 'Complainant (Confidential)',
+    complainant_name: apiCase.complainant_name || apiCase.person_name || 'Complainant (Self)',
+    complainant_phone: apiCase.complainant_phone || '+91 98XXX-XXXXX',
+    incident_location: apiCase.incident_location || (apiCase.district ? `${apiCase.district}, ${apiCase.state || 'Delhi'}` : 'Central Delhi'),
+    police_station: apiCase.police_station || 'PS Central Jurisdiction',
+    caste_category: apiCase.caste_category || 'Scheduled Caste (SC)',
+    applicable_sections: apiCase.applicable_sections || 'SC/ST (PoA) Act & IPC Provisions',
+    person_assaulted_date: apiCase.person_assaulted_date || null,
+    assigned_io: apiCase.assigned_io || 'IO Roster Pending Assignment',
+    evidence_files: apiCase.evidence_files || [],
     riskTier: tier,
     risk_tier: tier,
     sviScore: score,
     svi_score: score,
-    slaDueDate: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+    slaDueDate: apiCase.slaDueDate || new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
     district: apiCase.district || 'Central Delhi',
     state: apiCase.state || 'Delhi',
     channel: apiCase.channel_of_origin || 'portal',
     channel_of_origin: apiCase.channel_of_origin || 'portal',
     createdAt: apiCase.created_at,
     created_at: apiCase.created_at,
-    victimAgeGroup: '—',
+    victimAgeGroup: apiCase.victimAgeGroup || '—',
     isSilentSignal: apiCase.is_silent_signal,
     incidentType: apiCase.incident_description || 'No description provided',
     incident_description: apiCase.incident_description,
+    case_summary: apiCase.case_summary || apiCase.incident_description,
     explanation_text: apiCase.explanation_text ?? ra?.explanation_text ?? apiCase.incident_description,
     flags: apiCase.flags ?? ra?.flags ?? {},
     recommended_action: apiCase.recommended_action,
@@ -75,45 +104,46 @@ export default function DistrictScreen() {
   const [toast, setToast] = useState(null);
   const [sortKey, setSortKey] = useState('created_at');
   const [sortDir, setSortDir] = useState('desc');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterRisk, setFilterRisk] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
   const { lang } = useLang();
   const at = ADMIN_TRANSLATIONS[lang] || ADMIN_TRANSLATIONS.en;
 
+  const loadCases = async () => {
+    try {
+      const data = await listCases({ role: 'dsp', district: 'Pune District', state: 'Maharashtra', limit: 100 });
+      if (data && data.length > 0) {
+        const apiCases = data.map(apiToCase);
+        const existingIds = new Set(apiCases.map(c => String(c.id)));
+        const extraMock = districtMockData.filter(m => !existingIds.has(String(m.id)));
+        setCases([...apiCases, ...extraMock]);
+        setUseMock(false);
+      } else {
+        setCases(districtMockData);
+        setUseMock(true);
+      }
+    } catch {
+      setCases(districtMockData);
+      setUseMock(true);
+    }
+  };
+
   useEffect(() => {
     let ws;
-    let cancelled = false;
-
-    const fetchCases = async () => {
-      try {
-        const data = await listCases({ role: 'dsp', district: 'Central Delhi', state: 'Delhi', limit: 100 });
-        if (!cancelled) {
-          const apiCases = data.map(apiToCase);
-          // Continuous integration: keep benchmark scenarios as constant baseline, prepend real API / IVRS cases
-          const existingIds = new Set(apiCases.map(c => String(c.id)));
-          const extraMock = districtMockData.filter(m => !existingIds.has(String(m.id)));
-          setCases([...apiCases, ...extraMock]);
-          setUseMock(false);
-        }
-      } catch {
-        if (!cancelled) {
-          setCases(districtMockData);
-          setUseMock(true);
-        }
-      }
-    };
-
-    fetchCases();
+    loadCases();
 
     const tryWs = () => {
       try {
         ws = connectWebSocket((msg) => {
-          if (msg.event === 'case_created' && !cancelled) {
+          if (msg.event === 'case_created') {
             const newCase = apiToCase(msg.data);
             setCases((prev) => [newCase, ...prev.filter(c => c.id !== newCase.id)]);
-            showToast(`New IVRS Telephony Complaint Registered: Case ${newCase.id}`, 'ok');
+            showToast(`New Live Complaint: Case ${newCase.id} (${newCase.person_name})`, 'ok');
           }
-          if (msg.event === 'case_updated' && !cancelled) {
+          if (msg.event === 'case_updated') {
             setCases((prev) =>
-              prev.map((c) => (c.id === `NHAA-${msg.data.id}` ? { ...apiToCase(msg.data), ...c } : c))
+              prev.map((c) => (c.id === `NHAA-${msg.data.id}` ? { ...c, ...apiToCase(msg.data) } : c))
             );
           }
         });
@@ -128,12 +158,32 @@ export default function DistrictScreen() {
     tryWs();
 
     return () => {
-      cancelled = true;
       if (ws) ws.close();
     };
   }, []);
 
-  const sortedCases = [...cases].sort((a, b) => {
+  const filteredCases = cases.filter((c) => {
+    if (filterRisk !== 'all' && c.riskTier !== filterRisk && c.risk_tier !== filterRisk) return false;
+    if (filterStatus !== 'all' && c.status !== filterStatus) return false;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchId = String(c.id || '').toLowerCase().includes(q);
+      const matchName = String(c.person_name || '').toLowerCase().includes(q);
+      const matchComplainant = String(c.complainant_name || '').toLowerCase().includes(q);
+      const matchPhone = String(c.complainant_phone || '').toLowerCase().includes(q);
+      const matchLoc = String(c.incident_location || '').toLowerCase().includes(q);
+      const matchPS = String(c.police_station || '').toLowerCase().includes(q);
+      const matchDesc = String(c.incident_description || c.incidentType || '').toLowerCase().includes(q);
+      const matchSec = String(c.applicable_sections || '').toLowerCase().includes(q);
+      if (!matchId && !matchName && !matchComplainant && !matchPhone && !matchLoc && !matchPS && !matchDesc && !matchSec) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  const sortedCases = [...filteredCases].sort((a, b) => {
     let av, bv;
     if (sortKey === 'riskTier' || sortKey === 'risk_tier') {
       av = TIER_ORDER[a.riskTier || a.risk_tier] ?? 99;
@@ -203,7 +253,7 @@ export default function DistrictScreen() {
     const numericId = String(row.id).replace(/^NHAA-/, '');
     if (useMock || !session?.token) {
       const next = cases.map((c) =>
-        c.id === row.id ? { ...c, riskTier: 'high', currentLevel: 2, slaDueDate: new Date(Date.now() + 12 * 3600 * 1000).toISOString() } : c
+        c.id === row.id ? { ...c, riskTier: 'high', currentLevel: 2, status: 'escalated' } : c
       );
       setCases(next);
       showToast(`Case ${row.id} escalated to State Superintendent of Police (SP).`, 'ok');
@@ -212,10 +262,10 @@ export default function DistrictScreen() {
     try {
       setActionBusy('escalate_to_state');
       const result = await postCaseAction(numericId, 'escalate_to_state');
-      setCases((prev) => prev.map((c) => (c.id === row.id ? { ...c, currentLevel: 2, riskTier: result.risk_tier || 'high' } : c)));
+      setCases((prev) => prev.map((c) => (c.id === row.id ? { ...c, currentLevel: 2, status: 'escalated', riskTier: result.risk_tier || 'high' } : c)));
       showToast(`Case ${row.id} escalated to State Superintendent of Police (SP).`, 'ok');
     } catch (err) {
-      setCases((prev) => prev.map((c) => (c.id === row.id ? { ...c, currentLevel: 2, riskTier: 'high' } : c)));
+      setCases((prev) => prev.map((c) => (c.id === row.id ? { ...c, currentLevel: 2, status: 'escalated', riskTier: 'high' } : c)));
       showToast(`Case ${row.id} escalated to State Superintendent of Police (SP).`, 'ok');
     } finally {
       setActionBusy(null);
@@ -245,141 +295,251 @@ export default function DistrictScreen() {
     }
   };
 
-  const handleEngineAction = async (action, caseData) => {
-    const id = caseData.id ?? caseData.case_id;
-    setActionBusy(action);
-    if (useMock || !session?.token) {
-      setConfirmStatus({ caseId: id, state: 'done', action });
-      setActionBusy(null);
-      return;
-    }
-    try {
-      const result = await postCaseAction(id, action);
-      setConfirmStatus({ caseId: id, state: 'done', action, result });
-      if (selected) {
-        const refreshed = await getFullCase(id).catch(() => selected);
-        setSelected({ ...refreshed, _displayId: selected._displayId });
-        const res = await getAllowedActions(id).catch(() => ({ allowed_actions: [] }));
-        setAllowedActions(res?.allowed_actions || []);
-      }
-    } catch (err) {
-      setConfirmStatus({ caseId: id, state: 'done', action });
-    } finally {
-      setActionBusy(null);
-    }
-  };
-
-  const handleConfirmAction = async (caseData) => {
-    const id = caseData.id ?? caseData.case_id;
-    const confirmedBy = session?.name || session?.username || `dsp_${session?.district || 'central_delhi'}`;
-    setConfirmStatus({ caseId: id, state: 'sending' });
-    try {
-      const dispatched = await confirmOfficerDecision(id, confirmedBy);
-      setConfirmStatus({ caseId: id, state: 'done', count: dispatched.length });
-      if (selected?.id === id) {
-        const notifications = await getCaseNotifications(id).catch(() => []);
-        setSelected((cur) => (cur && cur.id === id ? { ...cur, notifications } : cur));
-      }
-    } catch (err) {
-      setConfirmStatus({ caseId: id, state: 'done', count: 1 });
-    }
-  };
-
   const criticalCount = cases.filter((c) => c.riskTier === 'critical').length;
   const highCount = cases.filter((c) => c.riskTier === 'high').length;
   const resolvedCount = cases.filter((c) => c.status === 'resolved' || c.status === 'closed').length;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-      {/* ── Status Bar ── */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* ── Official Toast Banner ── */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: 24,
+          right: 24,
+          zIndex: 9999,
+          background: 'rgb(0, 115, 230)',
+          color: '#FFFFFF',
+          padding: '12px 20px',
+          borderRadius: 8,
+          boxShadow: '0 8px 24px rgba(0, 115, 230, 0.3)',
+          fontWeight: 700,
+          fontSize: 13,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+        }}>
+          <CheckCircle2 size={18} />
+          {toast.text}
+        </div>
+      )}
+
+      {/* ── Official Command Top Banner ── */}
       <div style={{
+        background: 'linear-gradient(135deg, rgb(0, 115, 230) 0%, rgb(0, 85, 180) 100%)',
+        color: '#FFFFFF',
+        borderRadius: 12,
+        padding: '24px 28px',
+        boxShadow: '0 4px 20px rgba(0, 115, 230, 0.15)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        background: '#FFFFFF',
-        padding: '12px 18px',
-        borderRadius: 4,
-        border: '1px solid #CBD5E1',
         flexWrap: 'wrap',
-        gap: 12,
+        gap: 16,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            background: wsConnected ? '#10B981' : '#F59E0B',
-            display: 'inline-block',
-          }} />
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#003366' }}>
-              Jurisdiction: Central Delhi District &mdash; Active Investigation Roster
-            </div>
-            <div style={{ fontSize: 11, color: '#64748B', marginTop: 1 }}>
-              {wsConnected ? 'Central Real-Time Telephony Synchronization Online' : 'Standard Repository Polling Active'}
-            </div>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <span style={{
+              background: '#FF9933',
+              color: '#000000',
+              fontSize: 10,
+              fontWeight: 900,
+              padding: '2px 8px',
+              borderRadius: 4,
+              letterSpacing: '0.04em',
+            }}>
+              TIER L-1 COMMAND
+            </span>
+            <span style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.9)', fontWeight: 700 }}>
+              Office of the Deputy Superintendent of Police (DSP) &mdash; Pune District, Maharashtra
+            </span>
+          </div>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, letterSpacing: '-0.01em' }}>
+            District Police Roster &mdash; Incident Intelligence Queue
+          </h1>
+          <p style={{ margin: '6px 0 0', fontSize: 13, color: 'rgba(255, 255, 255, 0.85)', maxWidth: 760, lineHeight: 1.4 }}>
+            Direct supervisory control over registered SC/ST complaints, complainant profiles, ground IO inspection reports, and chain-of-custody evidence transfers.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            type="button"
+            onClick={loadCases}
+            style={{
+              background: '#FFFFFF',
+              color: 'rgb(0, 115, 230)',
+              fontWeight: 800,
+              fontSize: 13,
+              padding: '10px 18px',
+              borderRadius: 8,
+              border: 'none',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            }}
+          >
+            <RefreshCw size={14} /> Refresh Live Queue
+          </button>
+        </div>
+      </div>
+
+      {/* ── Official Statistics Matrix ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+        <div style={{
+          background: '#FFFFFF',
+          border: '1px solid #E2E8F0',
+          borderLeft: '5px solid rgb(0, 115, 230)',
+          borderRadius: 8,
+          padding: '16px 20px',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+        }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: 'rgb(0, 115, 230)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Total Registered Complaints
+          </div>
+          <div style={{ fontSize: 32, fontWeight: 900, color: '#0F172A', marginTop: 4 }}>
+            {cases.length}
+          </div>
+          <div style={{ fontSize: 11, color: '#64748B', fontWeight: 600, marginTop: 4 }}>
+            100% Ingestion Coverage
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            const extra = districtMockData.filter(m => !cases.some(c => c.id === m.id));
-            setCases([...cases, ...extra]);
-            showToast('District roster refreshed successfully.', 'ok');
-          }}
-          style={{
-            fontSize: 11,
-            fontWeight: 700,
-            padding: '6px 14px',
-            borderRadius: 3,
-            border: '1px solid #CBD5E1',
-            background: '#F8FAFC',
-            color: '#003366',
-            cursor: 'pointer',
-          }}
-        >
-          Refresh Roster
-        </button>
-      </div>
-
-      {/* ── Official Statistics Matrix (Clean Government Cards, No Emojis) ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
-        {[
-          { label: 'Total Registered Cases', count: cases.length, color: '#003366', borderTop: '3px solid #003366' },
-          { label: 'Critical Severity (SVI >= 75)', count: criticalCount, color: '#B91C1C', borderTop: '3px solid #B91C1C' },
-          { label: 'High Priority (SVI 50-74)', count: highCount, color: '#D97706', borderTop: '3px solid #D97706' },
-          { label: 'Disposed / Actioned', count: resolvedCount, color: '#059669', borderTop: '3px solid #059669' },
-        ].map((item) => (
-          <div key={item.label} style={{
-            background: '#FFFFFF',
-            border: '1px solid #CBD5E1',
-            borderTop: item.borderTop,
-            borderRadius: 4,
-            padding: '14px 18px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-          }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              {item.label}
-            </div>
-            <div style={{ fontSize: 28, fontWeight: 900, color: item.color, marginTop: 6, lineHeight: 1 }}>
-              {item.count}
-            </div>
+        <div style={{
+          background: '#FFFFFF',
+          border: '1px solid #E2E8F0',
+          borderLeft: '5px solid #DC2626',
+          borderRadius: 8,
+          padding: '16px 20px',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+        }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: '#DC2626', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Critical Severity (SVI &ge; 75)
           </div>
-        ))}
+          <div style={{ fontSize: 32, fontWeight: 900, color: '#DC2626', marginTop: 4 }}>
+            {criticalCount}
+          </div>
+          <div style={{ fontSize: 11, color: '#991B1B', fontWeight: 600, marginTop: 4 }}>
+            Urgent Ground IO Response Required
+          </div>
+        </div>
+
+        <div style={{
+          background: '#FFFFFF',
+          border: '1px solid #E2E8F0',
+          borderLeft: '5px solid #D97706',
+          borderRadius: 8,
+          padding: '16px 20px',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+        }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            High Priority (SVI 50-74)
+          </div>
+          <div style={{ fontSize: 32, fontWeight: 900, color: '#D97706', marginTop: 4 }}>
+            {highCount}
+          </div>
+          <div style={{ fontSize: 11, color: '#92400E', fontWeight: 600, marginTop: 4 }}>
+            Supervisory Scrutiny Active
+          </div>
+        </div>
+
+        <div style={{
+          background: '#FFFFFF',
+          border: '1px solid #E2E8F0',
+          borderLeft: '5px solid #059669',
+          borderRadius: 8,
+          padding: '16px 20px',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+        }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Disposed / Interim Relieved
+          </div>
+          <div style={{ fontSize: 32, fontWeight: 900, color: '#059669', marginTop: 4 }}>
+            {resolvedCount}
+          </div>
+          <div style={{ fontSize: 11, color: '#065F46', fontWeight: 600, marginTop: 4 }}>
+            Action Recorded in Police Register
+          </div>
+        </div>
       </div>
 
-      {/* ── Official Case Records Table (NIC Government Standard) ── */}
+      {/* ── Advanced Search & Filter Command Strip ── */}
+      <div style={{
+        background: '#FFFFFF',
+        padding: '16px 20px',
+        borderRadius: 8,
+        border: '1px solid #CBD5E1',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 14,
+        boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+      }}>
+        {/* Search Box */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 280, position: 'relative' }}>
+          <Search size={16} color="#64748B" style={{ position: 'absolute', left: 12 }} />
+          <input
+            type="text"
+            placeholder="Search by Complainant Name, Phone, Police Station, Thana, Incident Location, Act Sections..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px 14px 10px 36px',
+              fontSize: 13,
+              border: '1px solid #CBD5E1',
+              borderRadius: 6,
+              background: '#F8FAFC',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
+
+        {/* Filter Badges */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Filter size={14} /> Risk:
+          </span>
+          {['all', 'critical', 'high', 'moderate', 'low'].map((tier) => (
+            <button
+              key={tier}
+              type="button"
+              onClick={() => setFilterRisk(tier)}
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                padding: '6px 12px',
+                borderRadius: 6,
+                border: 'none',
+                background: filterRisk === tier ? 'rgb(0, 115, 230)' : '#F1F5F9',
+                color: filterRisk === tier ? '#FFFFFF' : '#475569',
+                cursor: 'pointer',
+                textTransform: 'capitalize',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {tier}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Official Structured Case Table ── */}
       <div style={{
         background: '#FFFFFF',
         border: '1px solid #CBD5E1',
-        borderRadius: 4,
+        borderRadius: 8,
         overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
       }}>
-        {/* Table Header Strip */}
+        {/* Table Sub-Header Strip */}
         <div style={{
-          padding: '14px 18px',
-          borderBottom: '1px solid #CBD5E1',
+          padding: '14px 20px',
+          borderBottom: '1px solid #E2E8F0',
           background: '#F8FAFC',
           display: 'flex',
           justifyContent: 'space-between',
@@ -387,318 +547,324 @@ export default function DistrictScreen() {
           flexWrap: 'wrap',
           gap: 10,
         }}>
-          <div>
-            <h2 style={{ fontSize: 15, fontWeight: 800, color: '#003366', margin: 0 }}>
-              District Police Roster &mdash; Incident Intelligence Queue
-            </h2>
-            <p style={{ fontSize: 11, color: '#64748B', margin: '2px 0 0' }}>
-              Real-time intelligence queue. Click sort buttons or column headers to toggle between latest calls and high risk.
-            </p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            {/* Quick Sort Toggle Buttons */}
-            <div style={{ display: 'flex', border: '1px solid #CBD5E1', borderRadius: 4, overflow: 'hidden', fontSize: 11 }}>
-              <button
-                type="button"
-                onClick={() => { setSortKey('created_at'); setSortDir('desc'); }}
-                style={{
-                  padding: '5px 12px',
-                  background: sortKey === 'created_at' ? '#003366' : '#FFFFFF',
-                  color: sortKey === 'created_at' ? '#FFFFFF' : '#475569',
-                  fontWeight: sortKey === 'created_at' ? 800 : 600,
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                Date (Newest First) {sortKey === 'created_at' && (sortDir === 'desc' ? '↓' : '↑')}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setSortKey('riskTier'); setSortDir('asc'); }}
-                style={{
-                  padding: '5px 12px',
-                  background: sortKey === 'riskTier' ? '#003366' : '#FFFFFF',
-                  color: sortKey === 'riskTier' ? '#FFFFFF' : '#475569',
-                  fontWeight: sortKey === 'riskTier' ? 800 : 600,
-                  border: 'none',
-                  borderLeft: '1px solid #CBD5E1',
-                  cursor: 'pointer',
-                }}
-              >
-                Severity (Highest SVI) {sortKey === 'riskTier' && (sortDir === 'asc' ? '↓' : '↑')}
-              </button>
-            </div>
-
-            <span style={{
-              fontSize: 11,
-              fontWeight: 800,
-              color: '#003366',
-              background: '#EFF6FF',
-              padding: '4px 12px',
-              borderRadius: 3,
-              border: '1px solid #BFDBFE',
-            }}>
-              {cases.length} Records on File
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 14, fontWeight: 900, color: 'rgb(0, 115, 230)' }}>
+              Live Registered Dossiers ({sortedCases.length} Matching Records)
             </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              type="button"
+              onClick={() => { setSortKey('created_at'); setSortDir('desc'); }}
+              style={{
+                padding: '6px 12px',
+                background: sortKey === 'created_at' ? 'rgb(0, 115, 230)' : '#FFFFFF',
+                color: sortKey === 'created_at' ? '#FFFFFF' : '#475569',
+                fontSize: 11,
+                fontWeight: 700,
+                border: '1px solid #CBD5E1',
+                borderRadius: 4,
+                cursor: 'pointer',
+              }}
+            >
+              Newest Complaints {sortKey === 'created_at' && (sortDir === 'desc' ? '↓' : '↑')}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setSortKey('riskTier'); setSortDir('asc'); }}
+              style={{
+                padding: '6px 12px',
+                background: sortKey === 'riskTier' ? 'rgb(0, 115, 230)' : '#FFFFFF',
+                color: sortKey === 'riskTier' ? '#FFFFFF' : '#475569',
+                fontSize: 11,
+                fontWeight: 700,
+                border: '1px solid #CBD5E1',
+                borderRadius: 4,
+                cursor: 'pointer',
+              }}
+            >
+              Highest SVI Severity {sortKey === 'riskTier' && (sortDir === 'asc' ? '↓' : '↑')}
+            </button>
           </div>
         </div>
 
+        {/* Full Table */}
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, textAlign: 'left' }}>
             <thead>
               <tr style={{ background: '#F1F5F9', borderBottom: '2px solid #CBD5E1' }}>
-                <th
-                  onClick={() => toggleSort('riskTier')}
-                  style={{
-                    padding: '10px 14px',
-                    fontSize: 11,
-                    fontWeight: 800,
-                    color: '#003366',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.03em',
-                    whiteSpace: 'nowrap',
-                    cursor: 'pointer',
-                  }}
-                  title="Click to sort by Severity"
-                >
-                  Risk & SVI Score {sortKey === 'riskTier' && (sortDir === 'asc' ? '↑' : '↓')}
-                </th>
-                <th style={{ padding: '10px 14px', fontSize: 11, fontWeight: 800, color: '#003366', textTransform: 'uppercase', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>Current Status</th>
-                <th style={{ padding: '10px 14px', fontSize: 11, fontWeight: 800, color: '#003366', textTransform: 'uppercase', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>Police Tier</th>
-                <th style={{ padding: '10px 14px', fontSize: 11, fontWeight: 800, color: '#003366', textTransform: 'uppercase', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>SLA Due Time</th>
-                <th style={{ padding: '10px 14px', fontSize: 11, fontWeight: 800, color: '#003366', textTransform: 'uppercase', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>Case Identifier</th>
-                <th style={{ padding: '10px 14px', fontSize: 11, fontWeight: 800, color: '#003366', textTransform: 'uppercase', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>Channel of Origin</th>
-                <th style={{ padding: '10px 14px', fontSize: 11, fontWeight: 800, color: '#003366', textTransform: 'uppercase', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>Incident Summary</th>
-                <th
-                  onClick={() => toggleSort('created_at')}
-                  style={{
-                    padding: '10px 14px',
-                    fontSize: 11,
-                    fontWeight: 800,
-                    color: '#003366',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.03em',
-                    whiteSpace: 'nowrap',
-                    cursor: 'pointer',
-                  }}
-                  title="Click to sort by Date Filed"
-                >
-                  Date Filed {sortKey === 'created_at' && (sortDir === 'desc' ? '↓' : '↑')}
-                </th>
-                <th style={{ padding: '10px 14px', fontSize: 11, fontWeight: 800, color: '#003366', textTransform: 'uppercase', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>Official Action</th>
+                <th style={{ padding: '12px 16px', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Case ID &amp; Channel</th>
+                <th style={{ padding: '12px 16px', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Complainant / Victim Profile</th>
+                <th style={{ padding: '12px 16px', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Incident Location &amp; Thana</th>
+                <th style={{ padding: '12px 16px', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Offence &amp; Act Sections</th>
+                <th style={{ padding: '12px 16px', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Threat &amp; SVI</th>
+                <th style={{ padding: '12px 16px', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Assigned IO &amp; Evidence</th>
+                <th style={{ padding: '12px 16px', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Status &amp; Police Tier</th>
+                <th style={{ padding: '12px 16px', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', textAlign: 'right', whiteSpace: 'nowrap' }}>Command Action</th>
               </tr>
             </thead>
             <tbody>
-              {sortedCases.map((c, index) => {
-                const lvl = c.currentLevel ?? 0;
-                const isAtDistrict = lvl >= 1;
-                const sb = STATUS_BADGE[c.status] || STATUS_BADGE.new;
-                return (
-                  <tr
-                    key={c.id}
-                    style={{
-                      borderBottom: '1px solid #E2E8F0',
-                      background: index % 2 === 0 ? '#FFFFFF' : '#F8FAFC',
-                    }}
-                  >
-                    {/* SVI & Severity Tier */}
-                    <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
-                      <RiskBadge tier={c.riskTier} score={c.sviScore} />
-                    </td>
+              {sortedCases.length === 0 ? (
+                <tr>
+                  <td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#64748B' }}>
+                    No complaints matching current filter and search parameters.
+                  </td>
+                </tr>
+              ) : (
+                sortedCases.map((c, index) => {
+                  const lvl = c.currentLevel ?? 1;
+                  const isAtDistrict = lvl >= 1;
+                  const sb = STATUS_BADGE[c.status] || STATUS_BADGE.new;
+                  return (
+                    <tr
+                      key={c.id}
+                      style={{
+                        borderBottom: '1px solid #E2E8F0',
+                        background: index % 2 === 0 ? '#FFFFFF' : '#F8FAFC',
+                        transition: 'background 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = '#EFF6FF'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = index % 2 === 0 ? '#FFFFFF' : '#F8FAFC'; }}
+                    >
+                      {/* 1. Case Identifier & Channel */}
+                      <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontFamily: 'monospace', fontWeight: 900, color: 'rgb(0, 115, 230)', fontSize: 13 }}>
+                          {c.id}
+                        </div>
+                        <div style={{ marginTop: 4 }}>
+                          <span style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                            background: c.channel.includes('voice') || c.channel.includes('ivrs') ? '#FEF3C7' : '#EFF6FF',
+                            color: c.channel.includes('voice') || c.channel.includes('ivrs') ? '#92400E' : 'rgb(0, 115, 230)',
+                            border: c.channel.includes('voice') || c.channel.includes('ivrs') ? '1px solid #FDE68A' : '1px solid #BFDBFE',
+                          }}>
+                            {CHANNEL_LABELS[c.channel] || c.channel}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 4 }}>
+                          {new Date(c.createdAt || c.created_at || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </div>
+                      </td>
 
-                    {/* Status */}
-                    <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
-                      <span style={{
-                        display: 'inline-block',
-                        background: sb.bg,
-                        color: sb.fg,
-                        border: `1px solid ${sb.border}`,
-                        padding: '2px 8px',
-                        borderRadius: 3,
-                        fontSize: 11,
-                        fontWeight: 700,
-                      }}>
-                        {sb.label}
-                      </span>
-                    </td>
+                      {/* 2. Complainant / Victim Profile */}
+                      <td style={{ padding: '14px 16px', minWidth: 220 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <User size={14} color="rgb(0, 115, 230)" />
+                          <span style={{ fontWeight: 800, color: '#0F172A', fontSize: 13 }}>
+                            {c.person_name || 'Complainant (Confidential)'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 11, color: '#475569', marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Phone size={11} color="#64748B" /> {c.complainant_phone || '+91 98XXX-XXXXX'}
+                        </div>
+                        {c.caste_category && (
+                          <div style={{ marginTop: 4 }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, background: '#F1F5F9', color: '#334155', padding: '2px 6px', borderRadius: 3, border: '1px solid #CBD5E1' }}>
+                              {c.caste_category}
+                            </span>
+                          </div>
+                        )}
+                      </td>
 
-                    {/* Level */}
-                    <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
-                      <span style={{
-                        display: 'inline-block',
-                        background: isAtDistrict ? '#003366' : '#F1F5F9',
-                        color: isAtDistrict ? '#FFFFFF' : '#475569',
-                        border: isAtDistrict ? 'none' : '1px solid #CBD5E1',
-                        padding: '2px 8px',
-                        borderRadius: 3,
-                        fontSize: 11,
-                        fontWeight: 800,
-                      }}>
-                        L{lvl}: {LEVEL_LABELS[lvl] || 'DSP'}
-                      </span>
-                    </td>
+                      {/* 3. Incident Location & Thana */}
+                      <td style={{ padding: '14px 16px', minWidth: 240, maxWidth: 280 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#1E293B', display: 'flex', alignItems: 'flex-start', gap: 4 }}>
+                          <MapPin size={13} color="#DC2626" style={{ flexShrink: 0, marginTop: 2 }} />
+                          <span>{c.incident_location || `${c.district}, ${c.state}`}</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: '#0369A1', fontWeight: 700, marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Building2 size={12} color="#0369A1" /> {c.police_station || 'PS Central Jurisdiction'}
+                        </div>
+                        {c.person_assaulted_date && (
+                          <div style={{ fontSize: 10, color: '#DC2626', fontWeight: 700, marginTop: 3 }}>
+                            Incident Date: {new Date(c.person_assaulted_date).toLocaleDateString('en-IN')}
+                          </div>
+                        )}
+                      </td>
 
-                    {/* SLA Countdown */}
-                    <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
-                      <SLACountdown dueDate={c.slaDueDate} deadlineType="Resolution" />
-                    </td>
+                      {/* 4. Incident Offence & Applicable Sections */}
+                      <td style={{ padding: '14px 16px', maxWidth: 260 }}>
+                        <div style={{
+                          fontSize: 12,
+                          color: '#0F172A',
+                          fontWeight: 600,
+                          lineHeight: 1.3,
+                          marginBottom: 4,
+                        }} title={c.incident_description || c.incidentType}>
+                          {c.incidentType || c.incident_description}
+                        </div>
+                        {c.applicable_sections && (
+                          <span style={{
+                            display: 'inline-block',
+                            fontSize: 10,
+                            fontWeight: 700,
+                            background: '#EFF6FF',
+                            color: '#1E40AF',
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                            border: '1px solid #BFDBFE',
+                          }}>
+                            {c.applicable_sections}
+                          </span>
+                        )}
+                      </td>
 
-                    {/* Case Identifier */}
-                    <td style={{ padding: '10px 14px', whiteSpace: 'nowrap', fontFamily: 'monospace', fontWeight: 800, color: '#003366' }}>
-                      {c.id}
-                    </td>
+                      {/* 5. Risk & SVI Score */}
+                      <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
+                        <RiskBadge tier={c.riskTier || c.risk_tier} score={c.sviScore || c.svi_score} />
+                        {c.isSilentSignal && (
+                          <div style={{ marginTop: 4 }}>
+                            <span style={{ fontSize: 9, fontWeight: 800, background: '#FEE2E2', color: '#991B1B', padding: '1px 5px', borderRadius: 3, border: '1px solid #FCA5A5' }}>
+                              Silent Signal
+                            </span>
+                          </div>
+                        )}
+                      </td>
 
-                    {/* Channel */}
-                    <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
-                      <span style={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        padding: '2px 6px',
-                        borderRadius: 3,
-                        background: c.channel.includes('voice') || c.channel.includes('ivrs') ? '#FEF3C7' : '#F1F5F9',
-                        color: c.channel.includes('voice') || c.channel.includes('ivrs') ? '#92400E' : '#334155',
-                        border: c.channel.includes('voice') || c.channel.includes('ivrs') ? '1px solid #FDE68A' : '1px solid #CBD5E1',
-                      }}>
-                        {CHANNEL_LABELS[c.channel] || c.channel}
-                      </span>
-                    </td>
-
-                    {/* Incident Summary */}
-                    <td style={{ padding: '10px 14px', color: '#1E293B', maxWidth: 280 }}>
-                      <div style={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        fontSize: 12,
-                        fontWeight: 500,
-                      }} title={c.incidentType}>
-                        {c.incidentType}
-                      </div>
-                    </td>
-
-                    {/* Date Filed */}
-                    <td style={{ padding: '10px 14px', whiteSpace: 'nowrap', color: '#64748B', fontSize: 11 }}>
-                      <div style={{ fontWeight: 700, color: '#1E293B' }}>
-                        {new Date(c.createdAt || c.created_at || Date.now()).toLocaleDateString('en-IN', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </div>
-                      <div style={{ fontSize: 10, color: '#64748B' }}>
-                        {new Date(c.createdAt || c.created_at || Date.now()).toLocaleTimeString('en-IN', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          second: '2-digit',
-                          hour12: true,
-                        })}
-                      </div>
-                    </td>
-
-                    {/* Actions */}
-                    <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
-                      <div style={{ display: 'inline-flex', gap: 6 }}>
-                        <button
-                          onClick={() => handleViewCase(c)}
-                          title="Examine full case dossier & SVI breakdown"
-                          style={{
-                            background: '#003366',
-                            color: '#FFFFFF',
-                            borderRadius: 3,
-                            padding: '5px 12px',
+                      {/* 6. Assigned IO & Evidence Repository */}
+                      <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#334155' }}>
+                          {c.assigned_io || 'IO Roster Active'}
+                        </div>
+                        <div style={{ marginTop: 4 }}>
+                          <span style={{
                             fontSize: 11,
                             fontWeight: 700,
-                            border: 'none',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Examine
-                        </button>
+                            background: (c.evidence_files && c.evidence_files.length > 0) ? '#EFF6FF' : '#F1F5F9',
+                            color: (c.evidence_files && c.evidence_files.length > 0) ? 'rgb(0, 115, 230)' : '#64748B',
+                            padding: '3px 8px',
+                            borderRadius: 4,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            border: (c.evidence_files && c.evidence_files.length > 0) ? '1px solid #BFDBFE' : '1px solid #CBD5E1',
+                          }}>
+                            <FolderOpen size={11} /> {c.evidence_files ? c.evidence_files.length : 0} Attached
+                          </span>
+                        </div>
+                      </td>
 
-                        {!isAtDistrict && (
+                      {/* 7. Status & Police Tier */}
+                      <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
+                        <span style={{
+                          display: 'inline-block',
+                          background: sb.bg,
+                          color: sb.fg,
+                          border: `1px solid ${sb.border}`,
+                          padding: '3px 8px',
+                          borderRadius: 4,
+                          fontSize: 11,
+                          fontWeight: 800,
+                        }}>
+                          {sb.label}
+                        </span>
+                        <div style={{ marginTop: 4 }}>
+                          <span style={{
+                            display: 'inline-block',
+                            background: isAtDistrict ? 'rgb(0, 115, 230)' : '#F1F5F9',
+                            color: isAtDistrict ? '#FFFFFF' : '#475569',
+                            padding: '2px 6px',
+                            borderRadius: 3,
+                            fontSize: 10,
+                            fontWeight: 800,
+                          }}>
+                            L{lvl}: {LEVEL_LABELS[lvl] || 'DSP'}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* 8. Senior Officer Actions */}
+                      <td style={{ padding: '14px 16px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
                           <button
-                            onClick={() => handleTakeOwnership(c)}
-                            disabled={actionBusy === 'take_ownership'}
+                            type="button"
+                            onClick={() => handleViewCase(c)}
+                            title="Examine full dossier & SVI evidence"
                             style={{
-                              background: '#059669',
+                              background: 'rgb(0, 115, 230)',
                               color: '#FFFFFF',
-                              borderRadius: 3,
-                              padding: '5px 10px',
-                              fontSize: 11,
-                              fontWeight: 700,
+                              borderRadius: 6,
+                              padding: '6px 14px',
+                              fontSize: 12,
+                              fontWeight: 800,
                               border: 'none',
                               cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              boxShadow: '0 2px 6px rgba(0, 115, 230, 0.2)',
                             }}
                           >
-                            {actionBusy === 'take_ownership' ? 'Assigning…' : 'Take Ownership'}
+                            Examine <ArrowUpRight size={13} />
                           </button>
-                        )}
 
-                        {isAtDistrict && (
-                          <button
-                            onClick={() => handleEscalate(c)}
-                            disabled={actionBusy === 'escalate_to_state'}
-                            title="Escalate dossier to State Superintendent of Police"
-                            style={{
-                              background: '#D97706',
-                              color: '#FFFFFF',
-                              borderRadius: 3,
-                              padding: '5px 10px',
-                              fontSize: 11,
-                              fontWeight: 700,
-                              border: 'none',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            {actionBusy === 'escalate_to_state' ? 'Escalating…' : 'Escalate to SP'}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+                          {!isAtDistrict && (
+                            <button
+                              type="button"
+                              onClick={() => handleTakeOwnership(c)}
+                              disabled={actionBusy === 'take_ownership'}
+                              style={{
+                                background: '#059669',
+                                color: '#FFFFFF',
+                                borderRadius: 6,
+                                padding: '6px 10px',
+                                fontSize: 11,
+                                fontWeight: 800,
+                                border: 'none',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {actionBusy === 'take_ownership' ? 'Assigning…' : 'Take Ownership'}
+                            </button>
+                          )}
+
+                          {isAtDistrict && (
+                            <button
+                              type="button"
+                              onClick={() => handleEscalate(c)}
+                              disabled={actionBusy === 'escalate_to_state'}
+                              title="Escalate dossier to State Superintendent of Police"
+                              style={{
+                                background: '#D97706',
+                                color: '#FFFFFF',
+                                borderRadius: 6,
+                                padding: '6px 10px',
+                                fontSize: 11,
+                                fontWeight: 800,
+                                border: 'none',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {actionBusy === 'escalate_to_state' ? 'Escalating…' : 'Escalate to SP'}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
+      {/* ── Case Detail & Examination Panel ── */}
       {selected && (
         <CaseDetailPanel
           caseData={selected}
-          onClose={() => {
-            setSelected(null);
-            setAllowedActions([]);
-            setActionBusy(null);
-            setConfirmStatus(null);
+          onClose={() => setSelected(null)}
+          onRefresh={loadCases}
+          onAction={async (action, caseItem) => {
+            await postCaseAction(caseItem.numericId || caseItem.id, action, 'Action confirmed by DSP command officer');
+            loadCases();
           }}
-          onAction={handleEngineAction}
-          onConfirmAction={handleConfirmAction}
-          allowedActions={allowedActions}
-          actionsLoading={actionsLoading}
-          actionBusy={actionBusy}
         />
-      )}
-
-      {toast && (
-        <div
-          role={toast.kind === 'err' ? 'alert' : 'status'}
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            zIndex: 1200,
-            background: toast.kind === 'err' ? '#B91C1C' : '#003366',
-            color: '#FFFFFF',
-            padding: '10px 18px',
-            borderRadius: 4,
-            fontSize: 12,
-            fontWeight: 700,
-            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-          }}
-        >
-          {toast.text}
-        </div>
       )}
     </div>
   );

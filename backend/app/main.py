@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from app.routes.cases import router as cases_router
 from app.routes.risk_assessments import router as ra_router
@@ -12,6 +14,8 @@ from app.routes.twilio_webhook import router as twilio_router
 # ── Aditya's auth & admin panel layer ────────────────────────────────────────
 from app.routes.auth import router as auth_router
 from app.routes.admin_panel import router as admin_panel_router
+from app.routes.evidence import router as evidence_router
+from app.routes.handoffs import router as handoffs_router
 from app.config import settings
 
 
@@ -19,6 +23,9 @@ from app.config import settings
 async def lifespan(app: FastAPI):
     from app.database import AsyncSessionLocal, engine, Base
     import app.models  # noqa: F401 — ensure all models are registered
+
+    # Ensure uploads directory exists
+    Path("uploads/evidence").mkdir(parents=True, exist_ok=True)
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -57,6 +64,12 @@ app.add_middleware(
 # ── Aditya's auth & admin panel routes (FIRST — JWT /api/cases must win) ─────
 app.include_router(auth_router)                       # /auth/login, /auth/logout, /auth/me
 app.include_router(admin_panel_router, prefix="/api") # /api/cases (JWT-scoped), /api/sla-status, etc.
+app.include_router(evidence_router, prefix="/api")    # /api/cases/{id}/evidence, /api/evidence/...
+app.include_router(handoffs_router, prefix="/api")    # /api/cases/{id}/handoff, /api/cases/{id}/lock, etc.
+
+# Mount static uploads directory
+Path("uploads").mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # ── Vinit's internal routes (raw — for AI module / channel ingestion only) ───
 # NOTE: /api/cases here is shadowed by admin_panel's JWT version above.

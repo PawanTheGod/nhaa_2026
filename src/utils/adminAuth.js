@@ -1,26 +1,48 @@
 const SESSION_KEY = 'nhaa_admin_session';
 
-/** No separate responder roles — all roles are in the police hierarchy. */
+/** No separate responder roles — all roles are in the police and multi-tier hierarchy. */
 export const RESPONDER_ROLES = [];
 
 /**
- * Real Indian Police hierarchy:
- * operator (Call Centre) → dsp (Dy. SP) → sp (Superintendent) → ig (Inspector General)
+ * Multi-tier Hierarchical Roles:
+ * operator (Call Centre) → io (Investigating Officer) → dsp/acp (Dy. SP / ACP)
+ * → sp (Superintendent) → ig/director (Inspector General / Director)
+ * → judiciary (Legal Adjudication) → swo (Social Welfare Officer)
  */
-export const ALL_ROLES = ['operator', 'dsp', 'sp', 'ig'];
+export const ALL_ROLES = [
+  'operator',
+  'io',
+  'dsp',
+  'acp',
+  'sp',
+  'ig',
+  'director',
+  'judiciary',
+  'swo',
+];
 
 export const ROLE_LABELS = {
-  operator: 'Call Centre Operator',
+  operator: 'Call Centre Operator (Tier 0)',
+  io: 'IO (Investigating Officer)',
   dsp: 'DSP (Dy. Superintendent of Police)',
+  acp: 'ACP (Asst. Commissioner of Police)',
   sp: 'SP (Superintendent of Police)',
   ig: 'IG (Inspector General of Police)',
+  director: 'Director (Central Oversight)',
+  judiciary: 'Judiciary / Legal Authority',
+  swo: 'SWO (Social Welfare Officer)',
 };
 
 export const ROLE_REDIRECTS = {
   operator: '/admin/operator',
+  io: '/admin/io',
   dsp: '/admin/dsp',
+  acp: '/admin/acp',
   sp: '/admin/sp',
   ig: '/admin/ig',
+  director: '/admin/director',
+  judiciary: '/admin/judiciary',
+  swo: '/admin/swo',
 };
 
 export function getSession() {

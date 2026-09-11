@@ -13,6 +13,11 @@ import NhaaOrganisationPage from './pages/organisation/NhaaOrganisationPage';
 import DistrictScreen from './pages/admin/DistrictScreen';
 import StateScreen from './pages/admin/StateScreen';
 import MinistryScreen from './pages/admin/MinistryScreen';
+import IOScreen from './pages/admin/IOScreen';
+import ACPScreen from './pages/admin/ACPScreen';
+import DirectorScreen from './pages/admin/DirectorScreen';
+import JudiciaryScreen from './pages/admin/JudiciaryScreen';
+import SWOScreen from './pages/admin/SWOScreen';
 import TopBar from './components/TopBar';
 import LoginScreen from './pages/admin/LoginScreen';
 import OperatorScreen from './pages/admin/OperatorScreen';
@@ -1805,12 +1810,17 @@ function AppContent() {
          <Route path="/admin/login" element={<LoginScreen />} />
          <Route path="/admin" element={<LoginScreen />} />
          <Route path="/admin/operator" element={<AdminShell><OperatorScreen /></AdminShell>} />
+         <Route path="/admin/io" element={<AdminShell><IOScreen /></AdminShell>} />
          <Route path="/admin/dsp" element={<AdminShell><DistrictScreen /></AdminShell>} />
+         <Route path="/admin/acp" element={<AdminShell><ACPScreen /></AdminShell>} />
          <Route path="/admin/district" element={<AdminShell><DistrictScreen /></AdminShell>} />
          <Route path="/admin/sp" element={<AdminShell><StateScreen /></AdminShell>} />
          <Route path="/admin/state" element={<AdminShell><StateScreen /></AdminShell>} />
          <Route path="/admin/ig" element={<AdminShell><MinistryScreen /></AdminShell>} />
          <Route path="/admin/ministry" element={<AdminShell><MinistryScreen /></AdminShell>} />
+         <Route path="/admin/director" element={<AdminShell><DirectorScreen /></AdminShell>} />
+         <Route path="/admin/judiciary" element={<AdminShell><JudiciaryScreen /></AdminShell>} />
+         <Route path="/admin/swo" element={<AdminShell><SWOScreen /></AdminShell>} />
        </Routes>
 
       {(!isDedicatedPortal && !isAdminRoute) && <Footer />}
