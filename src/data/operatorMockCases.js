@@ -37,7 +37,9 @@ export const operatorMockCases = [
     },
     notifications: [
       { recipient_role: 'police', channel: 'sms', sent_at: '2026-08-31T08:12:30+05:30', status: 'sent' },
-      { recipient_role: 'witness_protection', channel: 'system', sent_at: '2026-08-31T08:12:31+05:30', status: 'sent' },
+      { recipient_role: 'dsp', channel: 'telephony', sent_at: '2026-08-31T08:12:35+05:30', status: 'delivered' },
+      { recipient_role: 'dlsa', channel: 'email', sent_at: '2026-08-31T08:13:00+05:30', status: 'delivered' },
+      { recipient_role: 'swo', channel: 'system', sent_at: '2026-08-31T08:13:10+05:30', status: 'sent' },
     ],
   },
   {
@@ -63,7 +65,7 @@ export const operatorMockCases = [
     incident_description: 'Online grievance: illegal land encroachment using earthmovers, destruction of standing crops, social boycott threats.',
     is_silent_signal: false,
     recommended_action: 'legal_aid',
-    explanation_text: 'High distress in narrative text; fear and intimidation flags. DLSA Pune legal aid and SDPO notification triggered.',
+    explanation_text: 'High distress in narrative text; fear and intimidation flags. DLSA Pune legal aid, Revenue Tahsildar survey, and SDPO notification triggered.',
     flags: {
       trauma: { present: true, confidence: 0.72, signals: ['narrative distress markers'] },
       fear: { present: true, confidence: 0.81, signals: ['avoidance language'] },
@@ -74,6 +76,8 @@ export const operatorMockCases = [
     notifications: [
       { recipient_role: 'dlsa', channel: 'email', sent_at: '2026-08-31T09:46:00+05:30', status: 'sent' },
       { recipient_role: 'police', channel: 'sms', sent_at: '2026-08-31T09:46:01+05:30', status: 'sent' },
+      { recipient_role: 'dsp', channel: 'system', sent_at: '2026-08-31T09:46:15+05:30', status: 'delivered' },
+      { recipient_role: 'swo', channel: 'email', sent_at: '2026-08-31T09:46:30+05:30', status: 'sent' },
     ],
   },
   {
@@ -99,7 +103,7 @@ export const operatorMockCases = [
     incident_description: 'Chatbot intake: Medical officer targeted with fabricated complaints, abusive WhatsApp audio messages, casteist slurs.',
     is_silent_signal: false,
     recommended_action: 'counseling',
-    explanation_text: 'Moderate risk: harassment markers present, institutional protection required.',
+    explanation_text: 'Moderate risk: workplace harassment & malicious prosecution markers. Institutional protection & DLSA legal counseling dispatched.',
     flags: {
       trauma: { present: false, confidence: 0.22, signals: [] },
       fear: { present: true, confidence: 0.64, signals: ['workplace vulnerability'] },
@@ -107,7 +111,11 @@ export const operatorMockCases = [
       intimidation: { present: true, confidence: 0.71, signals: ['unlawful pressure'] },
       isolation: { present: false, confidence: 0.15, signals: [] },
     },
-    notifications: [],
+    notifications: [
+      { recipient_role: 'dlsa', channel: 'email', sent_at: '2026-08-31T10:21:00+05:30', status: 'delivered' },
+      { recipient_role: 'police', channel: 'sms', sent_at: '2026-08-31T10:21:05+05:30', status: 'sent' },
+      { recipient_role: 'swo', channel: 'system', sent_at: '2026-08-31T10:21:10+05:30', status: 'sent' },
+    ],
   },
   {
     id: 1004,
@@ -132,7 +140,7 @@ export const operatorMockCases = [
     incident_description: 'Information request: education hostel subsidy and self-employment micro-credit schemes in Pune district.',
     is_silent_signal: false,
     recommended_action: 'general_info',
-    explanation_text: 'Informational request, no distress or danger markers detected.',
+    explanation_text: 'Informational request, no distress or danger markers detected. Forwarded to Social Welfare Officer for Swadhar scheme link.',
     flags: {
       trauma: { present: false, confidence: 0.02, signals: [] },
       fear: { present: false, confidence: 0.04, signals: [] },
@@ -140,7 +148,9 @@ export const operatorMockCases = [
       intimidation: { present: false, confidence: 0.03, signals: [] },
       isolation: { present: false, confidence: 0.02, signals: [] },
     },
-    notifications: [],
+    notifications: [
+      { recipient_role: 'swo', channel: 'system', sent_at: '2026-08-31T11:01:00+05:30', status: 'delivered' },
+    ],
   },
   {
     id: 1005,
@@ -165,7 +175,7 @@ export const operatorMockCases = [
     incident_description: 'IVRS intake: 6 Katkari tribal workers forcibly detained at sugarcane site, denied statutory wages with assault threats.',
     is_silent_signal: false,
     recommended_action: 'police_intervention',
-    explanation_text: 'High SVI: severe isolation, intimidation, confinement markers detected. Immediate joint police-revenue raid recommended.',
+    explanation_text: 'High SVI: severe isolation, intimidation, confinement markers detected. Immediate joint police-revenue SDM rescue raid recommended.',
     flags: {
       trauma: { present: true, confidence: 0.82, signals: ['confinement distress'] },
       fear: { present: true, confidence: 0.89, signals: ['fear of violence'] },
@@ -175,6 +185,9 @@ export const operatorMockCases = [
     },
     notifications: [
       { recipient_role: 'police', channel: 'sms', sent_at: '2026-08-31T11:31:00+05:30', status: 'sent' },
+      { recipient_role: 'dsp', channel: 'telephony', sent_at: '2026-08-31T11:31:05+05:30', status: 'delivered' },
+      { recipient_role: 'swo', channel: 'system', sent_at: '2026-08-31T11:31:10+05:30', status: 'sent' },
+      { recipient_role: 'dlsa', channel: 'email', sent_at: '2026-08-31T11:31:15+05:30', status: 'delivered' },
     ],
   },
   {
@@ -200,7 +213,7 @@ export const operatorMockCases = [
     incident_description: 'Web complaint: Discriminatory seating and caste humiliation of Dalit student during school hours.',
     is_silent_signal: false,
     recommended_action: 'counseling',
-    explanation_text: 'Moderate SVI: emotional trauma and isolation signals detected. Child welfare committee and SDM Baramati notified.',
+    explanation_text: 'Moderate SVI: emotional trauma and isolation signals detected. Child welfare committee and SDM Baramati notified for inquiry.',
     flags: {
       trauma: { present: true, confidence: 0.65, signals: ['humiliation markers'] },
       fear: { present: true, confidence: 0.58, signals: ['school avoidance'] },
@@ -208,7 +221,11 @@ export const operatorMockCases = [
       intimidation: { present: true, confidence: 0.62, signals: ['social exclusion'] },
       isolation: { present: true, confidence: 0.74, signals: ['segregated classroom seating'] },
     },
-    notifications: [],
+    notifications: [
+      { recipient_role: 'swo', channel: 'system', sent_at: '2026-08-31T12:01:00+05:30', status: 'delivered' },
+      { recipient_role: 'dlsa', channel: 'email', sent_at: '2026-08-31T12:01:10+05:30', status: 'sent' },
+      { recipient_role: 'police', channel: 'sms', sent_at: '2026-08-31T12:01:15+05:30', status: 'sent' },
+    ],
   },
   {
     id: 1007,
@@ -243,7 +260,9 @@ export const operatorMockCases = [
     },
     notifications: [
       { recipient_role: 'police', channel: 'sms', sent_at: '2026-08-31T13:15:30+05:30', status: 'sent' },
-      { recipient_role: 'hospital', channel: 'system', sent_at: '2026-08-31T13:15:32+05:30', status: 'sent' },
+      { recipient_role: 'dsp', channel: 'telephony', sent_at: '2026-08-31T13:15:31+05:30', status: 'delivered' },
+      { recipient_role: 'swo', channel: 'system', sent_at: '2026-08-31T13:15:32+05:30', status: 'sent' },
+      { recipient_role: 'dlsa', channel: 'email', sent_at: '2026-08-31T13:15:35+05:30', status: 'delivered' },
     ],
   },
   {
@@ -269,7 +288,7 @@ export const operatorMockCases = [
     incident_description: 'Mobile App report: Water access dispute at Wagholi village tap. Resolved under police bandobast and SDPO mediation.',
     is_silent_signal: false,
     recommended_action: 'general_info',
-    explanation_text: 'Dispute peacefully resolved on-site. Low lingering risk.',
+    explanation_text: 'Dispute peacefully resolved on-site with full drinking water restoration. Low lingering risk.',
     flags: {
       trauma: { present: false, confidence: 0.05, signals: [] },
       fear: { present: false, confidence: 0.08, signals: [] },
@@ -277,6 +296,9 @@ export const operatorMockCases = [
       intimidation: { present: false, confidence: 0.12, signals: [] },
       isolation: { present: false, confidence: 0.04, signals: [] },
     },
-    notifications: [],
+    notifications: [
+      { recipient_role: 'swo', channel: 'system', sent_at: '2026-08-31T14:01:00+05:30', status: 'delivered' },
+      { recipient_role: 'police', channel: 'sms', sent_at: '2026-08-31T14:01:05+05:30', status: 'sent' },
+    ],
   },
 ];
