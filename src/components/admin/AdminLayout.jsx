@@ -36,9 +36,9 @@ const RANK_CONFIG = {
 
 const ADMIN_NAV = [
   { label: 'Operator Desk',      path: '/admin/operator',  code: 'L-0',   Icon: Headphones, desc: 'Call Centre & AI Triage Queue', roles: ['operator', 'dsp', 'acp', 'sp', 'ig', 'director'] },
-  { label: 'IO Field Ops',       path: '/admin/io',        code: 'L-0.5', Icon: Search, desc: 'Ground Investigation, Site Log & Evidence', roles: ['io', 'dsp', 'acp', 'sp', 'ig', 'director'] },
-  { label: 'ACP Command',        path: '/admin/acp',       code: 'L-1',   Icon: ShieldAlert, desc: 'Case Scrutiny, Evidence Inspection & Forwarding', roles: ['acp', 'dsp', 'sp', 'ig', 'director'] },
-  { label: 'DSP Operations',     path: '/admin/dsp',       code: 'L-1',   Icon: Shield, desc: 'District Field Operations & Inquiry', roles: ['dsp', 'acp', 'sp', 'ig', 'director'] },
+  { label: 'IO Field Ops',       path: '/admin/io',        code: 'L-0.5', Icon: Search, desc: 'Ground Investigation & Site Evidence (Supervisory Monitor)', roles: ['io', 'dsp', 'acp', 'sp', 'ig', 'director'] },
+  { label: 'ACP Command',        path: '/admin/acp',       code: 'L-1',   Icon: ShieldAlert, desc: 'Case Scrutiny & Field Forwarding', roles: ['acp', 'dsp', 'sp', 'ig', 'director'] },
+  { label: 'DSP Operations',     path: '/admin/dsp',       code: 'L-1',   Icon: Shield, desc: 'District Field Operations & Inquiry', roles: ['dsp', 'sp', 'ig', 'director'] },
   { label: 'SP Oversight',       path: '/admin/sp',        code: 'L-2',   Icon: Award, desc: 'Delay Alert System & Case Lock to Judiciary', roles: ['sp', 'ig', 'director'] },
   { label: 'IG Intelligence',    path: '/admin/ig',        code: 'L-3',   Icon: Award, desc: 'National Overview & Apex Review', roles: ['ig', 'director'] },
   { label: 'Director Control',   path: '/admin/director',  code: 'L-3+',  Icon: Building2, desc: 'Full-Tier Performance & Aggregate KPIs', roles: ['director'] },
@@ -48,7 +48,8 @@ const ADMIN_NAV = [
 
 /**
  * Real-Life Statutory Hierarchy Access Check (SC/ST PoA Act & Rules 1995)
- * Subordinates cannot access superior command desks.
+ * Subordinates (Operator L-0, IO L-0.5) can NEVER access superior command desks.
+ * Superior officers only monitor IO submissions from their supervisory purview.
  */
 function isRoleAuthorized(requiredRoles, currentRole) {
   if (!currentRole) return false;
@@ -281,34 +282,44 @@ export default function AdminLayout({ children }) {
 
         {/* Right Officer Status & Role Switcher */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Quick Role Switcher for Judges / Demo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F1F5F9', padding: '4px 10px', borderRadius: 6, border: '1px solid #CBD5E1' }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#475569' }}>Switch Desk:</span>
-            <select
-              value={role}
-              onChange={(e) => handleRoleSwitch(e.target.value)}
-              style={{
-                fontSize: 11,
-                fontWeight: 800,
-                color: 'rgb(0, 115, 230)',
-                background: '#FFFFFF',
-                border: '1px solid #94A3B8',
-                borderRadius: 4,
-                padding: '3px 6px',
-                cursor: 'pointer',
-              }}
-            >
-              <option value="operator">L-0: Call Centre Operator</option>
-              <option value="io">L-0.5: IO Field Investigator</option>
-              <option value="dsp">L-1: DySP District Command</option>
-              <option value="acp">L-1: ACP Zonal Field</option>
-              <option value="sp">L-2: SP District Oversight</option>
-              <option value="ig">L-3: IG State Intelligence</option>
-              <option value="director">L-3+: Director Apex Oversight</option>
-              <option value="judiciary">L-4: Special Judiciary Court</option>
-              <option value="swo">L-5: Social Welfare Officer</option>
-            </select>
-          </div>
+          {/* Desk Switcher restricted strictly to authorized supervisory scope */}
+          {ADMIN_NAV.filter((item) => navVisible(item, role)).length > 1 ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F1F5F9', padding: '4px 10px', borderRadius: 6, border: '1px solid #CBD5E1' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#475569' }}>Supervisory Desk:</span>
+              <select
+                value={location.pathname}
+                onChange={(e) => navigate(e.target.value)}
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: 'rgb(0, 115, 230)',
+                  background: '#FFFFFF',
+                  border: '1px solid #94A3B8',
+                  borderRadius: 4,
+                  padding: '3px 6px',
+                  cursor: 'pointer',
+                }}
+              >
+                {ADMIN_NAV.filter((item) => navVisible(item, role)).map((n) => (
+                  <option key={n.path} value={n.path}>
+                    {n.code}: {n.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div style={{
+              fontSize: 11,
+              fontWeight: 800,
+              color: '#0369A1',
+              background: '#E0F2FE',
+              border: '1px solid #BAE6FD',
+              padding: '4px 10px',
+              borderRadius: 6,
+            }}>
+              Station Desk: {rank.code} {rank.label}
+            </div>
+          )}
 
           <div style={{
             display: 'flex',
