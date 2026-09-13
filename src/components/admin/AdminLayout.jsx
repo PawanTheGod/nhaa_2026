@@ -97,6 +97,10 @@ export default function AdminLayout({ children }) {
     resolved: 7,
   });
 
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailRecipient, setEmailRecipient] = useState('supervisor');
+  const [emailSent, setEmailSent] = useState(false);
+
   const toggleSidebar = () => {
     setCollapsed((prev) => {
       const next = !prev;
@@ -351,6 +355,29 @@ export default function AdminLayout({ children }) {
               </div>
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setShowEmailModal(true)}
+            style={{
+              background: '#F0F9FF',
+              color: '#0369A1',
+              fontSize: 11,
+              fontWeight: 700,
+              padding: '6px 12px',
+              borderRadius: 5,
+              border: '1.5px solid #BAE6FD',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#E0F2FE'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#F0F9FF'; }}
+          >
+            📧 Email Report
+          </button>
 
           <button
             type="button"
@@ -695,6 +722,76 @@ export default function AdminLayout({ children }) {
           </main>
         </div>
       </div>
+
+      {/* Email Report Modal */}
+      {showEmailModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.7)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999,
+        }}>
+          <div style={{
+            background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 12,
+            padding: '28px 32px', width: 420, boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+          }}>
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', margin: '0 0 6px' }}>📧 Escalate / Send Report</h3>
+            <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 20px', lineHeight: 1.5 }}>
+              Send an encrypted situation report to another tier in the hierarchy.
+            </p>
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 6 }}>
+              Select Recipient Level
+            </label>
+            <select
+              value={emailRecipient}
+              onChange={(e) => setEmailRecipient(e.target.value)}
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 6,
+                color: '#0F172A', fontSize: 13, padding: '10px 12px', marginBottom: 20, outline: 'none',
+              }}
+            >
+              <option value="supervisor">⬆ Higher Command (SP / IG / Director)</option>
+              <option value="subordinate">⬇ Lower Field Ops (DSP / IO / Operator)</option>
+              <option value="judiciary">⚖ Judiciary / Court Registry</option>
+              <option value="swo">🤝 Social Welfare Officer</option>
+              <option value="sysadmin">🛡️ System Administrator</option>
+            </select>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => {
+                  let emailTo = 'admin@nhaa.gov.in';
+                  if (emailRecipient === 'supervisor') emailTo = 'command@nhaa.gov.in';
+                  if (emailRecipient === 'subordinate') emailTo = 'fieldops@nhaa.gov.in';
+                  if (emailRecipient === 'judiciary') emailTo = 'registry.court@nhaa.gov.in';
+                  if (emailRecipient === 'swo') emailTo = 'welfare@nhaa.gov.in';
+
+                  const subject = encodeURIComponent(`NHAA Escalation Report — ${rank.label} (${new Date().toLocaleDateString('en-IN')})`);
+                  const body = encodeURIComponent(`Generating system report from ${rank.label} desk...\n\nTargeting: ${emailRecipient.toUpperCase()}`);
+                  window.location.href = `mailto:${emailTo}?subject=${subject}&body=${body}`;
+                  
+                  setEmailSent(true);
+                  setTimeout(() => { setEmailSent(false); setShowEmailModal(false); }, 2000);
+                }}
+                style={{
+                  flex: 1, background: emailSent ? '#166534' : 'rgb(0, 115, 230)',
+                  color: '#FFFFFF', border: 'none', borderRadius: 8,
+                  padding: '10px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                {emailSent ? '✓ Opening Email Client...' : 'Generate & Send Email'}
+              </button>
+              <button
+                onClick={() => setShowEmailModal(false)}
+                style={{
+                  background: '#F1F5F9', color: '#475569', border: '1px solid #CBD5E1',
+                  borderRadius: 8, padding: '10px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

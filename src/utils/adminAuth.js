@@ -19,6 +19,7 @@ export const ALL_ROLES = [
   'director',
   'judiciary',
   'swo',
+  'sysadmin',
 ];
 
 export const ROLE_LABELS = {
@@ -31,6 +32,7 @@ export const ROLE_LABELS = {
   director: 'Director (Central Oversight)',
   judiciary: 'Judiciary / Legal Authority',
   swo: 'SWO (Social Welfare Officer)',
+  sysadmin: 'System Administrator (Full Tier Monitoring)',
 };
 
 export const ROLE_REDIRECTS = {
@@ -43,6 +45,7 @@ export const ROLE_REDIRECTS = {
   director: '/admin/director',
   judiciary: '/admin/judiciary',
   swo: '/admin/swo',
+  sysadmin: '/admin/sysadmin',
 };
 
 export function getSession() {

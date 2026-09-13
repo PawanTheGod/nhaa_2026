@@ -1,10 +1,13 @@
 /**
  * Offline fallback credentials when POST /auth/login is unreachable.
- * Accepts both demo123 and the seed password Test@1234.
+ * Accepts demo123, Test@1234 (operational), and Admin@1234 (sysadmin).
  * Updated with Maharashtra & Pune District jurisdictions.
  */
 
-const ACCEPTED_PASSWORDS = new Set(['demo123', 'Test@1234']);
+const ACCEPTED_PASSWORDS = new Set(['demo123', 'Test@1234', 'Admin@1234']);
+
+/** Sysadmin has a separate password so it can't be reached with normal officer creds. */
+const SYSADMIN_PASSWORD = 'Admin@1234';
 
 const OFFICERS = [
   // ── Multi-Tier Police & Welfare Hierarchy (Maharashtra / Pune District) ──
@@ -32,8 +35,18 @@ const OFFICERS = [
 export const MOCK_USERS = OFFICERS.map((u) => ({ ...u, password: 'demo123' }));
 
 export function authenticateMockUser(username, password) {
+  const uname = username.trim().toLowerCase();
+
+  // Sysadmin: separate password, not in OFFICERS list
+  if (uname === 'sysadmin') {
+    if (password === SYSADMIN_PASSWORD) {
+      return { username: 'sysadmin', role: 'sysadmin', name: 'System Administrator (NHAA)' };
+    }
+    return null;
+  }
+
   if (!ACCEPTED_PASSWORDS.has(password)) return null;
-  const user = OFFICERS.find((u) => u.username === username.trim().toLowerCase());
+  const user = OFFICERS.find((u) => u.username === uname);
   if (!user) return null;
   return { ...user };
 }

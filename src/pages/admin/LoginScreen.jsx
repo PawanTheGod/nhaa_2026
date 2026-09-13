@@ -5,6 +5,7 @@ import LoginForm from '../../components/admin/LoginForm';
 import { authenticateMockUser } from '../../data/mockUsers';
 import { loginOfficer } from '../../services/api';
 import { getSession, setSession, getRedirectForRole } from '../../utils/adminAuth';
+import { SENIOR_ROLES } from '../../utils/roleGuard';
 import {
   Shield,
   ShieldCheck,
@@ -42,6 +43,7 @@ const HIERARCHY_TIERS = [
     scope: 'Acoustic voice triage, silent signal intake, emergency PCR dispatch',
     badgeBg: '#0284C7',
     icon: UserCheck,
+    isSenior: false,
   },
   {
     code: 'LEVEL 0.5',
@@ -51,6 +53,7 @@ const HIERARCHY_TIERS = [
     scope: 'PS Bhosari MIDC / Pune, spot panchnama, witness video statements',
     badgeBg: '#2563EB',
     icon: Shield,
+    isSenior: false,
   },
   {
     code: 'LEVEL 1',
@@ -60,6 +63,7 @@ const HIERARCHY_TIERS = [
     scope: 'Pimpri Chinchwad, 60-day investigation mandate tracking (Sec 4)',
     badgeBg: '#059669',
     icon: ShieldCheck,
+    isSenior: false,
   },
   {
     code: 'LEVEL 2',
@@ -69,6 +73,7 @@ const HIERARCHY_TIERS = [
     scope: 'Pune District, pre-judiciary case lock & SHA-256 seal freeze',
     badgeBg: '#D97706',
     icon: Lock,
+    isSenior: false,
   },
   {
     code: 'LEVEL 3',
@@ -78,6 +83,7 @@ const HIERARCHY_TIERS = [
     scope: 'Maharashtra PCR Cell, district atrocity heatmaps & analytics',
     badgeBg: '#DC2626',
     icon: Building2,
+    isSenior: true,
   },
   {
     code: 'LEVEL 4',
@@ -87,6 +93,7 @@ const HIERARCHY_TIERS = [
     scope: 'Shivajinagar Pune, sealed evidence review & SWO binding directives',
     badgeBg: '#7C3AED',
     icon: Scale,
+    isSenior: true,
   },
   {
     code: 'LEVEL 5',
@@ -96,6 +103,7 @@ const HIERARCHY_TIERS = [
     scope: 'Pune District, 3-Stage DBT disbursal (Rule 12(4)) & scheme linkages',
     badgeBg: '#047857',
     icon: HeartHandshake,
+    isSenior: true,
   },
 ];
 
@@ -105,6 +113,8 @@ export default function LoginScreen() {
   const [busy, setBusy] = useState(false);
   const [selectedUser, setSelectedUser] = useState('dsp');
   const existing = getSession();
+  // Show sysadmin tile only when ?admin=1 is in the URL
+  const showSysAdmin = typeof window !== 'undefined' && window.location.href.includes('admin=1');
 
   if (existing?.role) {
     return <Navigate to={getRedirectForRole(existing.role)} replace />;
@@ -297,30 +307,32 @@ export default function LoginScreen() {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <span style={{ fontSize: 12, fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Select Role to Auto-Fill Credentials:
+                Select Role to Access Portal:
               </span>
-              <span style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>Click any role below</span>
+              <span style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>Click any operational role below</span>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 240, overflowY: 'auto', paddingRight: 4 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 280, overflowY: 'auto', paddingRight: 4 }}>
               {HIERARCHY_TIERS.map((tier) => {
                 const isSelected = selectedUser === tier.username;
                 const TierIcon = tier.icon;
+                const isSenior = SENIOR_ROLES.has(tier.username);
                 return (
                   <button
                     key={tier.username}
                     type="button"
-                    onClick={() => handleQuickSelect(tier.username)}
+                    onClick={() => !isSenior && handleQuickSelect(tier.username)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       padding: '8px 12px',
                       borderRadius: 6,
-                      background: isSelected ? '#EFF6FF' : '#F8FAFC',
-                      border: `1.5px solid ${isSelected ? 'rgb(0, 115, 230)' : '#E2E8F0'}`,
-                      cursor: 'pointer',
+                      background: isSenior ? '#F8FAFC' : isSelected ? '#EFF6FF' : '#F8FAFC',
+                      border: `1.5px solid ${isSenior ? '#E2E8F0' : isSelected ? 'rgb(0, 115, 230)' : '#E2E8F0'}`,
+                      cursor: isSenior ? 'default' : 'pointer',
                       textAlign: 'left',
+                      opacity: isSenior ? 0.75 : 1,
                       transition: 'all 0.15s ease',
                     }}
                   >
@@ -339,13 +351,48 @@ export default function LoginScreen() {
                       <div>
                         <strong style={{ fontSize: 12.5, color: '#0F172A' }}>{tier.roleName} &mdash; {tier.title}</strong>
                         <div style={{ fontSize: 11, color: '#64748B' }}>{tier.scope}</div>
+                        {isSenior && (
+                          <div style={{ fontSize: 10.5, color: '#94A3B8', fontStyle: 'italic', marginTop: 2 }}>
+                            🔒 Use your assigned departmental ID to log in
+                          </div>
+                        )}
                       </div>
                     </div>
-
-                    <ChevronRight size={16} color={isSelected ? 'rgb(0, 115, 230)' : '#94A3B8'} />
+                    {!isSenior && <ChevronRight size={16} color={isSelected ? 'rgb(0, 115, 230)' : '#94A3B8'} />}
                   </button>
                 );
               })}
+
+              {/* Sysadmin tile — only shown when ?admin=1 is in URL */}
+              {showSysAdmin && (
+                <button
+                  type="button"
+                  onClick={() => handleQuickSelect('sysadmin')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 12px',
+                    borderRadius: 6,
+                    background: selectedUser === 'sysadmin' ? '#FFF7ED' : '#F8FAFC',
+                    border: `1.5px solid ${selectedUser === 'sysadmin' ? '#F97316' : '#FED7AA'}`,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 10, fontWeight: 900, background: '#7C2D12', color: '#FFF', padding: '2px 6px', borderRadius: 3, whiteSpace: 'nowrap' }}>
+                      SYSTEM
+                    </span>
+                    <div>
+                      <strong style={{ fontSize: 12.5, color: '#0F172A' }}>System Administrator &mdash; Full Tier Monitoring</strong>
+                      <div style={{ fontSize: 11, color: '#64748B' }}>All desks, audit logs, active sessions, real-time oversight</div>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} color={selectedUser === 'sysadmin' ? '#F97316' : '#94A3B8'} />
+                </button>
+              )}
             </div>
           </div>
         </section>

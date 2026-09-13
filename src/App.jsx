@@ -18,11 +18,13 @@ import ACPScreen from './pages/admin/ACPScreen';
 import DirectorScreen from './pages/admin/DirectorScreen';
 import JudiciaryScreen from './pages/admin/JudiciaryScreen';
 import SWOScreen from './pages/admin/SWOScreen';
+import SysAdminScreen from './pages/admin/SysAdminScreen';
 import TopBar from './components/TopBar';
 import LoginScreen from './pages/admin/LoginScreen';
 import OperatorScreen from './pages/admin/OperatorScreen';
 import ResponderScreen from './pages/admin/ResponderScreen';
 import AdminLayout from './components/admin/AdminLayout';
+import RequireRole from './components/admin/RequireRole';
 import { LangProvider } from './i18n/LangContext';
 
 const AdminShell = ({ children }) => (
@@ -1809,18 +1811,19 @@ function AppContent() {
          <Route path="/sambal" element={<NhaaPage />} />
          <Route path="/admin/login" element={<LoginScreen />} />
          <Route path="/admin" element={<LoginScreen />} />
-         <Route path="/admin/operator" element={<AdminShell><OperatorScreen /></AdminShell>} />
-         <Route path="/admin/io" element={<AdminShell><IOScreen /></AdminShell>} />
-         <Route path="/admin/dsp" element={<AdminShell><DistrictScreen /></AdminShell>} />
-         <Route path="/admin/acp" element={<AdminShell><ACPScreen /></AdminShell>} />
-         <Route path="/admin/district" element={<AdminShell><DistrictScreen /></AdminShell>} />
-         <Route path="/admin/sp" element={<AdminShell><StateScreen /></AdminShell>} />
-         <Route path="/admin/state" element={<AdminShell><StateScreen /></AdminShell>} />
-         <Route path="/admin/ig" element={<AdminShell><MinistryScreen /></AdminShell>} />
-         <Route path="/admin/ministry" element={<AdminShell><MinistryScreen /></AdminShell>} />
-         <Route path="/admin/director" element={<AdminShell><DirectorScreen /></AdminShell>} />
-         <Route path="/admin/judiciary" element={<AdminShell><JudiciaryScreen /></AdminShell>} />
-         <Route path="/admin/swo" element={<AdminShell><SWOScreen /></AdminShell>} />
+         <Route path="/admin/operator" element={<RequireRole><AdminShell><OperatorScreen /></AdminShell></RequireRole>} />
+         <Route path="/admin/io" element={<RequireRole><AdminShell><IOScreen /></AdminShell></RequireRole>} />
+         <Route path="/admin/dsp" element={<RequireRole><AdminShell><DistrictScreen /></AdminShell></RequireRole>} />
+         <Route path="/admin/acp" element={<RequireRole><AdminShell><ACPScreen /></AdminShell></RequireRole>} />
+         <Route path="/admin/district" element={<RequireRole><AdminShell><DistrictScreen /></AdminShell></RequireRole>} />
+         <Route path="/admin/sp" element={<RequireRole><AdminShell><StateScreen /></AdminShell></RequireRole>} />
+         <Route path="/admin/state" element={<RequireRole><AdminShell><StateScreen /></AdminShell></RequireRole>} />
+         <Route path="/admin/ig" element={<RequireRole><AdminShell><MinistryScreen /></AdminShell></RequireRole>} />
+         <Route path="/admin/ministry" element={<RequireRole><AdminShell><MinistryScreen /></AdminShell></RequireRole>} />
+         <Route path="/admin/director" element={<RequireRole><AdminShell><DirectorScreen /></AdminShell></RequireRole>} />
+         <Route path="/admin/judiciary" element={<RequireRole><AdminShell><JudiciaryScreen /></AdminShell></RequireRole>} />
+         <Route path="/admin/swo" element={<RequireRole><AdminShell><SWOScreen /></AdminShell></RequireRole>} />
+         <Route path="/admin/sysadmin" element={<RequireRole><SysAdminScreen /></RequireRole>} />
        </Routes>
 
       {(!isDedicatedPortal && !isAdminRoute) && <Footer />}
